@@ -12,8 +12,4 @@
     <PackageReference Include="Testcontainers.RabbitMq" Version="3.7.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ProjectOrigin.VerifiableEventStore\ProjectOrigin.VerifiableEventStore.csproj" />
-  </ItemGroup>
-
 </Project>

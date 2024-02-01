@@ -4,5 +4,5 @@
     "coverage-gutters.coverageFileNames": [
         "coverage.cobertura.xml"
     ],
-    "dotnet.defaultSolution": "src/Registry.sln"
+    "dotnet.defaultSolution": "src/Electricity.sln"
 }
