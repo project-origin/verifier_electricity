@@ -44,9 +44,6 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
             if (!otherCertificate.Period.Equals(certificate.Period))
                 return new VerificationResult.Invalid("Certificates are not in the same period");
 
-            if (otherCertificate.GridArea != certificate.GridArea)
-                return new VerificationResult.Invalid("Certificates are not in the same area");
-
             var consumptionSlice = otherCertificate.GetCertificateSlice(payload.ConsumptionSourceSliceHash);
             if (consumptionSlice is null)
                 return new VerificationResult.Invalid("Consumption slice does not exist");
