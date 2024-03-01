@@ -8,6 +8,7 @@ using ProjectOrigin.Electricity.Server.Interfaces;
 using ProjectOrigin.Electricity.Server.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using Xunit;
+using Google.Protobuf.WellKnownTypes;
 
 namespace ProjectOrigin.Electricity.Tests;
 
@@ -107,11 +108,20 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_InvalidPeriod()
+    public async Task Verifier_AllocateCertificate_ValidPeriod_StartSame_EndDiff()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
-        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: consCert.Period.AddHours(1));
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 15, 0, TimeSpan.Zero))
+        });
         _otherCertificate = consCert;
 
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
@@ -119,7 +129,135 @@ public class ProductionAllocatedVerifierTests
 
         var result = await _verifier.Verify(transaction, prodCert, @event);
 
-        result.AssertInvalid("Certificates are not in the same period");
+        result.AssertValid();
+    }
+
+    [Fact]
+    public async Task Verifier_AllocateCertificate_ValidPeriod_StartDiff_EndSame()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 45, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 00, 0, TimeSpan.Zero))
+        });
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertValid();
+    }
+
+    [Fact]
+    public async Task Verifier_AllocateCertificate_ValidPeriod_Within()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 30, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 35, 0, TimeSpan.Zero))
+        });
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertValid();
+    }
+
+    [Fact]
+    public async Task Verifier_AllocateCertificate_InvalidPeriod_DifferentPeriods()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 14, 0, 0, TimeSpan.Zero))
+        });
+
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertInvalid("Periods are not overlapping");
+    }
+
+    [Fact]
+    public async Task Verifier_AllocateCertificate_InvalidPeriod_NotWithin_Before()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 30, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 30, 0, TimeSpan.Zero))
+        });
+
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertInvalid("Periods are not overlapping");
+    }
+
+    [Fact]
+    public async Task Verifier_AllocateCertificate_InvalidPeriod_NotWithin_After()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 11, 30, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 30, 0, TimeSpan.Zero))
+        });
+
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertInvalid("Periods are not overlapping");
     }
 
     [Fact]

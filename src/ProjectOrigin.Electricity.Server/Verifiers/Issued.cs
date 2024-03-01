@@ -3,6 +3,7 @@ using ProjectOrigin.Registry.V1;
 using System.Threading.Tasks;
 using ProjectOrigin.Electricity.Server.Models;
 using ProjectOrigin.Electricity.Server.Interfaces;
+using System;
 
 namespace ProjectOrigin.Electricity.Server.Verifiers;
 
@@ -28,6 +29,9 @@ public class IssuedEventVerifier : IEventVerifier<V1.IssuedEvent>
 
         if (!payload.OwnerPublicKey.TryToModel(out _))
             return new VerificationResult.Invalid("Invalid owner key, not a valid publicKey");
+
+        if (payload.Period.GetTimeSpan() > TimeSpan.FromHours(1))
+            return new VerificationResult.Invalid("Invalid period, maximum period is 1 hour");
 
         var areaPublicKey = _gridAreaIssuerService.GetAreaPublicKey(payload.GridArea);
         if (areaPublicKey is null)
