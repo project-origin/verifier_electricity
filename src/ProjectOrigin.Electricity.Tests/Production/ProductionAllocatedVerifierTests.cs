@@ -123,7 +123,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_InvalidArea()
+    public async Task Verifier_AllocateCertificate_AllowCrossArea()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, area: "DK1");
@@ -135,7 +135,7 @@ public class ProductionAllocatedVerifierTests
 
         var result = await _verifier.Verify(transaction, prodCert, @event);
 
-        result.AssertInvalid("Certificates are not in the same area");
+        result.AssertValid();
     }
 
     [Fact]
