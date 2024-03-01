@@ -108,7 +108,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_ValidPeriod_StartSame_EndDiff()
+    public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingStart()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
@@ -133,7 +133,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_ValidPeriod_StartDiff_EndSame()
+    public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingEnd()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
@@ -145,7 +145,7 @@ public class ProductionAllocatedVerifierTests
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
         {
             Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 45, 0, TimeSpan.Zero)),
-            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 00, 0, TimeSpan.Zero))
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
         });
         _otherCertificate = consCert;
 
@@ -158,7 +158,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_ValidPeriod_Within()
+    public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingWithin()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
@@ -209,7 +209,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_InvalidPeriod_NotWithin_Before()
+    public async Task Verifier_AllocateCertificate_InvalidPeriod_Before()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
@@ -235,7 +235,7 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_AllocateCertificate_InvalidPeriod_NotWithin_After()
+    public async Task Verifier_AllocateCertificate_InvalidPeriod_After()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 

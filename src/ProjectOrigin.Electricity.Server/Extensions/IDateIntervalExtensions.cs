@@ -9,7 +9,7 @@ public static class IDateIntervalExtensions
         return dateInterval.End.ToDateTimeOffset() - dateInterval.Start.ToDateTimeOffset();
     }
 
-    public static bool IsDateIntervalOverlapping(this V1.DateInterval first, V1.DateInterval second)
+    public static bool IsEnclosingOrEnclosed(this V1.DateInterval first, V1.DateInterval second)
     {
         var aStart = first.Start.ToDateTimeOffset();
         var aEnd = first.End.ToDateTimeOffset();

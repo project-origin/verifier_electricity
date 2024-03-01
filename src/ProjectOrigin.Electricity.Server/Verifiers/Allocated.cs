@@ -41,7 +41,7 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
             if (otherCertificate.Type != V1.GranularCertificateType.Consumption)
                 return new VerificationResult.Invalid("ConsumptionCertificate is not a consumption certificate");
 
-            if (!otherCertificate.Period.IsDateIntervalOverlapping(certificate.Period))
+            if (!otherCertificate.Period.IsEnclosingOrEnclosed(certificate.Period))
                 return new VerificationResult.Invalid("Periods are not overlapping");
 
             var consumptionSlice = otherCertificate.GetCertificateSlice(payload.ConsumptionSourceSliceHash);
