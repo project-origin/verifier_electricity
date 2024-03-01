@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using AutoFixture;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using Moq;
 using ProjectOrigin.Electricity.Extensions;
@@ -84,16 +85,36 @@ public class ProductionIssuedVerifierTests
         result.AssertInvalid("Invalid range proof for Quantity commitment");
     }
 
-    // [Fact]
-    // public async Task ProductionIssuedVerifier_InvalidPublicParameters_Fail()
-    // {
-    //     var @event = FakeRegister.CreateProductionIssuedEvent(publicQuantityCommitmentOverride: new SecretCommitmentInfo(695956), publicQuantity: true);
-    //     var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
+    [Fact]
+    public async Task ProductionIssuedVerifier_PeriodInvalid_ToLong()
+    {
+        var @event = FakeRegister.CreateProductionIssuedEvent(periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 14, 0, 0, TimeSpan.Zero))
+        });
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
 
-    //     var result = await _verifier.Verify(transaction, null, @event);
+        var result = await _verifier.Verify(transaction, null, @event);
 
-    //     result.AssertInvalid("Private and public quantity proof does not match");
-    // }
+        result.AssertInvalid("Invalid period, maximum period is 1 hour");
+    }
+
+
+    [Fact]
+    public async Task ProductionIssuedVerifier_PeriodInvalid_ToSmall()
+    {
+        var @event = FakeRegister.CreateProductionIssuedEvent(periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero))
+        });
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
+
+        var result = await _verifier.Verify(transaction, null, @event);
+
+        result.AssertInvalid("Invalid period, minimum period is 1 minute");
+    }
 
     [Fact]
     public async Task ProductionIssuedVerifier_InvalidOwner_Fail()

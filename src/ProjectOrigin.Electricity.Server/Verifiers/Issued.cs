@@ -33,6 +33,9 @@ public class IssuedEventVerifier : IEventVerifier<V1.IssuedEvent>
         if (payload.Period.GetTimeSpan() > TimeSpan.FromHours(1))
             return new VerificationResult.Invalid("Invalid period, maximum period is 1 hour");
 
+        if (payload.Period.GetTimeSpan() < TimeSpan.FromMinutes(1))
+            return new VerificationResult.Invalid("Invalid period, minimum period is 1 minute");
+
         var areaPublicKey = _gridAreaIssuerService.GetAreaPublicKey(payload.GridArea);
         if (areaPublicKey is null)
             return new VerificationResult.Invalid($"No issuer found for GridArea ”{payload.GridArea}”");
