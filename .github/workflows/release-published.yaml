@@ -6,18 +6,9 @@ on:
 
 jobs:
   define-version:
-    runs-on: ubuntu-22.04
-    outputs:
-      version: ${{ steps.output-version.outputs.version }}
+    uses: project-origin/.github/.github/workflows/reusable-tag-version.yaml@main
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set env
-        id: output-version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-  publish-electricity-server-container:
+  publish-container:
     needs:
       - define-version
     uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@main
