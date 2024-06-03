@@ -6,12 +6,12 @@ on:
 
 jobs:
   define-version:
-    uses: project-origin/.github/.github/workflows/reusable-tag-version.yaml@057d1fd15796629ffb09f13334336443a5cc6449
+    uses: project-origin/.github/.github/workflows/reusable-tag-version.yaml@8c2f54c56165a8c2b35493ad4fae5df8835063af
 
   publish-container:
     needs:
       - define-version
-    uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@057d1fd15796629ffb09f13334336443a5cc6449
+    uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@8c2f54c56165a8c2b35493ad4fae5df8835063af
     with:
       imagename: ghcr.io/project-origin/electricity-server
       version: ${{ needs.define-version.outputs.version }}
