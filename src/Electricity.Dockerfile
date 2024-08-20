@@ -6,6 +6,7 @@ ARG PROJECT
 WORKDIR /src
 
 COPY ./Protos ./Protos
+COPY ./Directory.Build.props ./Directory.Build.props
 COPY ./${PROJECT} ./${PROJECT}
 
 RUN dotnet restore ${PROJECT}
