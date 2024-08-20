@@ -25,12 +25,19 @@ public class ConsumptionIssuedVerifierTests
     {
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
-        var optionsMock = new Mock<IOptions<IssuerOptions>>();
-        optionsMock.Setup(obj => obj.Value).Returns(new IssuerOptions()
+        var optionsMock = new Mock<IOptionsMonitor<NetworkOptions>>();
+        optionsMock.Setup(obj => obj.CurrentValue).Returns(new NetworkOptions()
         {
-            Issuers = new Dictionary<string, string>(){
-                {IssuerArea, Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))},
-            }
+            Registries = new Dictionary<string, RegistryInfo>(),
+            Areas = new Dictionary<string, AreaInfo>(){
+                {IssuerArea, new AreaInfo(){
+                    IssuerKeys = new List<KeyInfo>(){
+                        new KeyInfo(){
+                            PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))
+                        }
+                    }
+                }}
+            },
         });
         var issuerService = new GridAreaIssuerOptionsService(optionsMock.Object);
 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using ProjectOrigin.Electricity.Server.Models;
 using ProjectOrigin.Electricity.Server.Interfaces;
 using System;
+using System.Linq;
 
 namespace ProjectOrigin.Electricity.Server.Verifiers;
 
@@ -36,11 +37,11 @@ public class IssuedEventVerifier : IEventVerifier<V1.IssuedEvent>
         if (payload.Period.GetTimeSpan() < TimeSpan.FromMinutes(1))
             return new VerificationResult.Invalid("Invalid period, minimum period is 1 minute");
 
-        var areaPublicKey = _gridAreaIssuerService.GetAreaPublicKey(payload.GridArea);
-        if (areaPublicKey is null)
+        var areaPublicKeys = _gridAreaIssuerService.GetAreaPublicKey(payload.GridArea);
+        if (!areaPublicKeys.Any())
             return new VerificationResult.Invalid($"No issuer found for GridArea ”{payload.GridArea}”");
 
-        if (!transaction.IsSignatureValid(areaPublicKey))
+        if (!areaPublicKeys.Any(transaction.IsSignatureValid))
             return new VerificationResult.Invalid($"Invalid issuer signature for GridArea ”{payload.GridArea}”");
 
         return new VerificationResult.Valid();

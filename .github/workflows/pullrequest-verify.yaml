@@ -21,5 +21,5 @@ jobs:
       imagename: ghcr.io/project-origin/electricity-server
       version: test
       context: ./src
-      dockerfile: ./src/ProjectOrigin.Electricity.Server/Dockerfile
+      dockerfile: ./src/Electricity.Dockerfile
       push: false

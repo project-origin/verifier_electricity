@@ -1,0 +1,33 @@
+using System;
+using System.Collections.Generic;
+
+namespace ProjectOrigin.Electricity.Server.Options;
+
+public record NetworkOptions
+{
+    public IDictionary<string, RegistryInfo> Registries { get; init; } = new Dictionary<string, RegistryInfo>();
+    public IDictionary<string, AreaInfo> Areas { get; init; } = new Dictionary<string, AreaInfo>();
+}
+
+public record RegistryInfo
+{
+    public required string Url { get; init; }
+}
+
+public class AreaInfo
+{
+    public required IList<KeyInfo> IssuerKeys { get; set; }
+}
+
+public class ChroniclerInfo
+{
+    public required string Url { get; set; }
+    public required IList<KeyInfo> IssuerKeys { get; set; }
+}
+
+public record KeyInfo
+{
+    public required string PublicKey { get; init; }
+    public DateTimeOffset? ValidFrom { get; init; }
+    public DateTimeOffset? ValidTo { get; init; }
+}

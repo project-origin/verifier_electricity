@@ -8,14 +8,25 @@ using ProjectOrigin.Electricity.Server.Interfaces;
 using ProjectOrigin.Electricity.Server.Options;
 using ProjectOrigin.Electricity.Server.Services;
 using ProjectOrigin.Electricity.Server.Verifiers;
+using ProjectOrigin.ServiceCommon.Grpc;
+using ProjectOrigin.ServiceCommon.Otlp;
+using ProjectOrigin.ServiceCommon.UriOptionsLoader;
 
 namespace ProjectOrigin.Electricity.Server;
 
 public class Startup
 {
+    private readonly IConfiguration _configuration;
+
+    public Startup(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddGrpc();
+        services.ConfigureDefaultOtlp(_configuration);
+        services.ConfigureGrpc(_configuration);
 
         services.AddSingleton<IProtoDeserializer>(new ProtoDeserializer(Assembly.GetAssembly(typeof(V1.IssuedEvent))!));
 
@@ -30,21 +41,9 @@ public class Startup
         services.AddTransient<IModelHydrater, ElectricityModelHydrater>();
         services.AddTransient<IGridAreaIssuerService, GridAreaIssuerOptionsService>();
 
-        services.AddSingleton<IValidateOptions<IssuerOptions>, IssuerOptionsValidator>();
-        services.AddOptions<IssuerOptions>()
-            .Configure<IConfiguration>((settings, configuration) =>
-            {
-                configuration.Bind(settings);
-            })
-            .ValidateOnStart();
-
-        services.AddSingleton<IValidateOptions<RegistryOptions>, RegistryOptionsValidator>();
-        services.AddOptions<RegistryOptions>()
-            .Configure<IConfiguration>((settings, configuration) =>
-            {
-                configuration.Bind(settings);
-            })
-            .ValidateOnStart();
+        services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
+        services.AddHttpClient();
+        services.ConfigureUriOptionsLoader<NetworkOptions>("network");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

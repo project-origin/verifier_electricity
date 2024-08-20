@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Options;
 using ProjectOrigin.Electricity.Server.Interfaces;
@@ -10,20 +12,23 @@ namespace ProjectOrigin.Electricity.Server.Services;
 
 public class GridAreaIssuerOptionsService : IGridAreaIssuerService
 {
-    private readonly IssuerOptions _options;
+    private readonly IOptionsMonitor<NetworkOptions> _options;
 
-    public GridAreaIssuerOptionsService(IOptions<IssuerOptions> options)
+    public GridAreaIssuerOptionsService(IOptionsMonitor<NetworkOptions> options)
     {
-        _options = options.Value;
+        _options = options;
     }
 
-    public IPublicKey? GetAreaPublicKey(string area)
+    public IEnumerable<IPublicKey> GetAreaPublicKey(string area)
     {
-        if (_options.Issuers.TryGetValue(area, out var base64))
+        if (_options.CurrentValue.Areas.TryGetValue(area, out var areaInfo))
         {
-            var keyText = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
-            return Algorithms.Ed25519.ImportPublicKeyText(keyText);
+            return areaInfo.IssuerKeys.Select(x =>
+            {
+                var keyText = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicKey));
+                return Algorithms.Ed25519.ImportPublicKeyText(keyText);
+            });
         }
-        return null;
+        return Enumerable.Empty<IPublicKey>();
     }
 }

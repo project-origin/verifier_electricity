@@ -1,3 +1,17 @@
 {
-    "extends": ["github>project-origin/.github:renovate-defaults.json"]
+    "extends": [
+        "github>project-origin/.github:renovate-defaults.json"
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "fileMatch": [
+                ".csproj$"
+            ],
+            "matchStrings": [
+                "<SourceUrl>https:\/\/raw.githubusercontent.com\/(?<depName>.+)\/(?<currentValue>v[^\/]+).+<\/SourceUrl>"
+            ],
+            "datasourceTemplate": "github-releases"
+        }
+    ]
 }

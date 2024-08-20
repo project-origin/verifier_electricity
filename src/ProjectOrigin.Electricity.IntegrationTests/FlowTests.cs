@@ -6,39 +6,50 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using ProjectOrigin.Electricity.Server;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 using ProjectOrigin.Verifier.V1;
-using Xunit.Abstractions;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using FluentAssertions;
 using System.Security.Cryptography;
 using ProjectOrigin.PedersenCommitment;
 using Xunit;
-using ProjectOrigin.TestUtils;
 using System.Text;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.Electricity.Server.Interfaces;
 using ProjectOrigin.Electricity.Server.Services;
+using ProjectOrigin.TestCommon.Fixtures;
+using ProjectOrigin.TestCommon;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
-public class FlowTests : GrpcTestBase<Startup>
+public class FlowTests : IClassFixture<TestServerFixture<Startup>>
 {
-    private IPrivateKey _issuerKey;
+    private readonly IPrivateKey _issuerKey;
+    private readonly TestServerFixture<Startup> _serviceFixture;
 
     const string Area = "TestArea";
     const string Registry = "test-registry";
 
-    public FlowTests(GrpcTestFixture<Startup> grpcFixture, ITestOutputHelper outputHelper) : base(grpcFixture, outputHelper)
+    public FlowTests(TestServerFixture<Startup> serviceFixture)
     {
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+        _serviceFixture = serviceFixture;
 
-        grpcFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
+        var configFile = TempFile.WriteAllText($"""
+        registries:
+          {Registry}:
+            url: http://localhost:5000
+        areas:
+          {Area}:
+            issuerKeys:
+              - publicKey: "{Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))}"
+        """, ".yaml");
+
+        serviceFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
         {
-            {$"Issuers:{Area}", Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))},
-            {$"Registries:{Registry}:Address", "http://localhost:5000"}
+            {"network:ConfigurationUri", "file://" + configFile},
         });
 
-        grpcFixture.testServicesConfigure = (services) =>
+        serviceFixture.ConfigureTestServices += (services) =>
         {
             services.RemoveAll<IRemoteModelLoader>();
             services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
@@ -90,7 +101,7 @@ public class FlowTests : GrpcTestBase<Startup>
 
     private async Task<VerifyTransactionResponse> SignEventAndVerify(Common.V1.FederatedStreamId streamId, IMessage @event, IPrivateKey key, IEnumerable<Registry.V1.Transaction>? stream = null)
     {
-        var client = new Verifier.V1.VerifierService.VerifierServiceClient(_grpcFixture.Channel);
+        var client = new Verifier.V1.VerifierService.VerifierServiceClient(_serviceFixture.Channel);
         var request = new Verifier.V1.VerifyTransactionRequest
         {
             Transaction = SignEvent(streamId, @event, key)

@@ -6,37 +6,48 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using ProjectOrigin.Electricity.Server;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 using ProjectOrigin.Verifier.V1;
-using Xunit.Abstractions;
 using Google.Protobuf;
 using FluentAssertions;
 using System.Security.Cryptography;
 using Xunit;
-using ProjectOrigin.TestUtils;
 using System.Text;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.Electricity.Server.Interfaces;
 using ProjectOrigin.Electricity.Server.Services;
+using ProjectOrigin.TestCommon.Fixtures;
+using ProjectOrigin.TestCommon;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
-public class ExceptionTest : GrpcTestBase<Startup>
+public class ExceptionTest : IClassFixture<TestServerFixture<Startup>>
 {
-    private IPrivateKey _issuerKey;
-
     private const string Area = "TestArea";
     private const string Registry = "test-registry";
 
-    public ExceptionTest(GrpcTestFixture<Startup> grpcFixture, ITestOutputHelper outputHelper) : base(grpcFixture, outputHelper)
+    private readonly IPrivateKey _issuerKey;
+    private readonly TestServerFixture<Startup> _serviceFixture;
+
+    public ExceptionTest(TestServerFixture<Startup> serviceFixture)
     {
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+        _serviceFixture = serviceFixture;
 
-        grpcFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
+        var configFile = TempFile.WriteAllText($"""
+        registries:
+          {Registry}:
+            url: http://localhost:5000
+        areas:
+          {Area}:
+            issuerKeys:
+              - publicKey: "{Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))}"
+        """, ".yaml");
+
+        serviceFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
         {
-            {$"Issuers:{Area}", Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))},
-            {$"Registries:{Registry}:Address", "http://localhost:5000"}
+            {"network:ConfigurationUri", "file://" + configFile},
         });
 
-        grpcFixture.testServicesConfigure = (services) =>
+        serviceFixture.ConfigureTestServices += (services) =>
         {
             services.RemoveAll<IRemoteModelLoader>();
             services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
@@ -46,7 +57,7 @@ public class ExceptionTest : GrpcTestBase<Startup>
     [Fact]
     public async Task NoVerifierForType_ReturnInvalid()
     {
-        var client = new VerifierService.VerifierServiceClient(_grpcFixture.Channel);
+        var client = new VerifierService.VerifierServiceClient(_serviceFixture.Channel);
 
         IMessage @event = new Common.V1.Uuid();
         var request = CreateInvalidSignedEvent(_issuerKey, @event, @event.Descriptor.FullName);
@@ -60,7 +71,7 @@ public class ExceptionTest : GrpcTestBase<Startup>
     [Fact]
     public async Task InvalidData_ReturnInvalid()
     {
-        var client = new VerifierService.VerifierServiceClient(_grpcFixture.Channel);
+        var client = new VerifierService.VerifierServiceClient(_serviceFixture.Channel);
 
         IMessage @event = new Common.V1.Uuid
         {
@@ -79,7 +90,7 @@ public class ExceptionTest : GrpcTestBase<Startup>
     [Fact]
     public async Task UnknownType_ReturnInvalid()
     {
-        var client = new VerifierService.VerifierServiceClient(_grpcFixture.Channel);
+        var client = new VerifierService.VerifierServiceClient(_serviceFixture.Channel);
 
         IMessage @event = new Common.V1.Uuid
         {

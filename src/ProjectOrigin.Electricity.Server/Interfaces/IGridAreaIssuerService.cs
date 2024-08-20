@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 
 namespace ProjectOrigin.Electricity.Server.Interfaces;
 
 public interface IGridAreaIssuerService
 {
-    IPublicKey? GetAreaPublicKey(string area);
+    IEnumerable<IPublicKey> GetAreaPublicKey(string area);
 }

@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProjectOrigin.TestUtils\ProjectOrigin.TestUtils.csproj" />
     <ProjectReference Include="..\ProjectOrigin.Electricity.Server\ProjectOrigin.Electricity.Server.csproj" />
+    <PackageReference Include="ProjectOrigin.TestCommon" Version="1.0.0-rc.5" />
   </ItemGroup>
 
   <ItemGroup>

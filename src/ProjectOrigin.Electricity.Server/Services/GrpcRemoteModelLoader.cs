@@ -14,20 +14,20 @@ public class GrpcRemoteModelLoader : IRemoteModelLoader
 {
     private readonly IModelHydrater _modelHydrater;
     private readonly IProtoDeserializer _protoDeserializer;
-    private readonly RegistryOptions _registryOptions;
+    private readonly IOptionsMonitor<NetworkOptions> _options;
 
-    public GrpcRemoteModelLoader(IModelHydrater modelHydrater, IProtoDeserializer protoDeserializer, IOptions<RegistryOptions> registryOptions)
+    public GrpcRemoteModelLoader(IModelHydrater modelHydrater, IProtoDeserializer protoDeserializer, IOptionsMonitor<NetworkOptions> options)
     {
         _modelHydrater = modelHydrater;
         _protoDeserializer = protoDeserializer;
-        _registryOptions = registryOptions.Value;
+        _options = options;
     }
 
     public GrpcChannel GetChannel(string registryName)
     {
-        if (_registryOptions.Registries.TryGetValue(registryName, out var registryInfo))
+        if (_options.CurrentValue.Registries.TryGetValue(registryName, out var registryInfo))
         {
-            return GrpcChannel.ForAddress(registryInfo.Address);
+            return GrpcChannel.ForAddress(registryInfo.Url);
         }
         else
         {
