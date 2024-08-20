@@ -19,15 +19,7 @@ public class AreaInfo
     public required IList<KeyInfo> IssuerKeys { get; set; }
 }
 
-public class ChroniclerInfo
-{
-    public required string Url { get; set; }
-    public required IList<KeyInfo> IssuerKeys { get; set; }
-}
-
 public record KeyInfo
 {
     public required string PublicKey { get; init; }
-    public DateTimeOffset? ValidFrom { get; init; }
-    public DateTimeOffset? ValidTo { get; init; }
 }
