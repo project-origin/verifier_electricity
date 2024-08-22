@@ -30,6 +30,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           env:
+            {{- include "otlp.config" . | nindent 12 }}
             {{- include "networkConfig.environmentVariables" .Values.networkConfig | nindent 12}}
           volumeMounts:
             {{- include "networkConfig.volumeMounts" .Values.networkConfig | nindent 12}}
