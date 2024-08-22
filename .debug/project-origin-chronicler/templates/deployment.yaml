@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verifier-RELEASE-NAME-deployment
+  labels:
+    app: verifier-RELEASE-NAME
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: verifier-RELEASE-NAME
+  template:
+    metadata:
+      labels:
+        app: verifier-RELEASE-NAME
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1654
+        runAsNonRoot: true
+      containers:
+        - name: verifier-RELEASE-NAME
+          image: ghcr.io/project-origin/electricity-server:0.1.0
+          args:
+            - "--serve"
+          resources:
+            requests:
+              cpu: 500m
+            limits:
+              memory: 200Mi
+              ephemeral-storage: "1Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            - name: network__RefreshInterval
+              value: 00:15:00
+            - name: network__ConfigurationUri
+              value: https://raw.githubusercontent.com/project-origin/chronicler/main/configs/networkConfiguration.json
+          volumeMounts:
+            
+      volumes:
+      
+---

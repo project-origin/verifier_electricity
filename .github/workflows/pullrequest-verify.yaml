@@ -15,6 +15,9 @@ jobs:
   verify-renovate-config:
     uses: project-origin/.github/.github/workflows/reusable-verify-renovate.yaml@32ff33baaf1c9960ef1f01ef4ee554225db1972c
 
+  verify-chart:
+    uses: project-origin/.github/.github/workflows/reusable-verify-chart.yaml@32ff33baaf1c9960ef1f01ef4ee554225db1972c
+
   verify-container-build:
     uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@32ff33baaf1c9960ef1f01ef4ee554225db1972c
     with:

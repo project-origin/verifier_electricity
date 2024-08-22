@@ -1,0 +1,1 @@
+raw: Only one of url, yaml, json, or configMap must be set

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: project-origin-verifier-electricity
+description: A helm chart for deploying the Project Origin Verifier for ETT Electricity
+type: application
+version: 0.0.0
+
+annotations:
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/licence: Apache-2.0
+  artifacthub.io/links: |
+    - name: Source Code
+      url: https://github.com/project-origin/verifier_electricity
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/operator: "false"

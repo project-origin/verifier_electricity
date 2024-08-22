@@ -18,3 +18,15 @@ jobs:
       context: ./src
       dockerfile: ./src/Electricity.Dockerfile
       push: true
+
+  publish-chart:
+    needs:
+      - define-version
+      - publish-container
+    uses: project-origin/.github/.github/workflows/reusable-publish-chart.yaml@32ff33baaf1c9960ef1f01ef4ee554225db1972c
+    with:
+      version: ${{ needs.define-version.outputs.version }}
+      chart_folder: chart/
+      helm_registry_repository: project-origin/helm-registry
+    secrets:
+      helm_registry_token: ${{ secrets.HELM_REGISTRY_TOKEN }}

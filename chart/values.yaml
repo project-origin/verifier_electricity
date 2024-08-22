@@ -1,0 +1,81 @@
+# image defines the image configuration for the verifier server
+image:
+  # repository defines the image repository to use
+  repository: ghcr.io/project-origin/electricity-server
+  # tag defines the image tag to use, defaults to the chart appVersion
+  tag:
+
+# resources holds the configuration for the resource requests and limits
+resources:
+  # requests holds the configuration for the resource requests
+  requests:
+    # cpu defines the cpu request limit for the verifier server
+    cpu: 500m
+    # memory defines the memory request limit for the verifier server
+    memory:
+
+  # limits holds the configuration for the resource limits
+  limits:
+    # cpu defines the cpu limit for the verifier server
+    cpu:
+    # memory defines the memory limit for the verifier server
+    memory: 200Mi
+
+# service holds the configuration for the service
+service:
+  # type is the type of service to create, allowed values are (ClusterIP | LoadBalancer)
+  type: ClusterIP
+  # grpcPort is the port to use for the grpc service
+  grpcPort: 5000
+
+# replicaCount defines the number of replicas to run
+replicaCount: 3
+
+# networkConfig holds the configuration for the ProjectOrigin network configuration
+networkConfig:
+  # refreshInterval defines how often the network configuration should be refreshed, defaults to 15 minutes
+  refreshInterval: 00:15:00
+
+  # url defines an url to fetch the network configuration from, allowed formats are json or yaml
+  url: # https://example.com/networkConfiguration.json
+
+  # configMap defines an existing configmap to fetch the network configuration from
+  configMap:
+    # name: verifier-network-configuration
+    # key: networkConfiguration.json
+
+  # yaml defines the network configuration as a string in yaml
+  yaml: #|-
+  #   registries:
+  #     narniaReegistry:
+  #       url: "https://registry.narnia.example.com",
+  #   areas:
+  #     DK1:
+  #       issuerKeys:
+  #       - publicKey: "Ay02vkc6FGV8FwtvVsmBO2p7UdbZIcFhvMGFB40D3DKX"
+
+  # json defines the network configuration as a string in json
+  json: #|-
+  #  {
+  #    "registries": {
+  #      "narniaReegistry": {
+  #        "url": "https://registry.narnia.example.com"
+  #      }
+  #    },
+  #    "areas": {
+  #      "DK1": {
+  #        "issuerKeys": [
+  #          {
+  #            "publicKey": "Ay02vkc6FGV8FwtvVsmBO2p7UdbZIcFhvMGFB40D3DKX"
+  #          }
+  #        ]
+  #      }
+  #    }
+  #  }
+
+# otlp holds the configuration for the opentelemetry collector
+otlp:
+  # enabled determines if the opentelemetry collector is enabled
+  enabled: false
+  # endpoint defines the endpoint of the opentelemetry collector, example "http://otel-collector:4317"
+  endpoint:

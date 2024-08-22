@@ -1,0 +1,120 @@
+suite: Test Suite for Chronicler Chart
+
+templates:
+  - deployment.yaml
+
+set:
+  image:
+    tag: test
+
+tests:
+  - it: when yaml set should create a ConfigMap for network configuration and mount volume
+    set:
+      networkConfig:
+        yaml: |
+          registries:
+          areas:
+    documentIndex: 1
+    asserts:
+      - hasDocuments:
+          count: 2
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="network__ConfigurationUri")].value
+          pattern: "file:///etc/config/networkConfiguration.yaml"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.name
+          pattern: "RELEASE-NAME-configuration"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].key
+          pattern: "networkConfiguration.yaml"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].path
+          pattern: "networkConfiguration.yaml"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].mountPath
+          pattern: "/etc/config/networkConfiguration.yaml"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].subPath
+          pattern: "networkConfiguration.yaml"
+
+  - it: when json set should create a ConfigMap for network configuration and mount
+    set:
+      networkConfig:
+        json: |
+          {}
+    documentIndex: 1
+    asserts:
+      - hasDocuments:
+          count: 2
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="network__ConfigurationUri")].value
+          pattern: "file:///etc/config/networkConfiguration.json"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.name
+          pattern: "RELEASE-NAME-configuration"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].key
+          pattern: "networkConfiguration.json"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].path
+          pattern: "networkConfiguration.json"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].mountPath
+          pattern: "/etc/config/networkConfiguration.json"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].subPath
+          pattern: "networkConfiguration.json"
+
+  - it: when configMap set should create an env var with the configMap key and create a ConfigMap and mount volume
+    set:
+      networkConfig:
+        configMap:
+          name: chronicler-network-configuration
+          key: someFile.json
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="network__ConfigurationUri")].value
+          pattern: "file:///etc/config/someFile.json"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.name
+          pattern: "chronicler-network-configuration"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].key
+          pattern: "someFile.json"
+      - matchRegex:
+          path: spec.template.spec.volumes[?(@.name=="config-volume")].configMap.items[0].path
+          pattern: "someFile.json"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].mountPath
+          pattern: "/etc/config/someFile.json"
+      - matchRegex:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=="config-volume")].subPath
+          pattern: "someFile.json"
+
+  - it: when url set should create an env var with the url and not create a ConfigMap
+    set:
+      networkConfig:
+        url: https://raw.githubusercontent.com/project-origin/chronicler/main/configs/networkConfiguration.json
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="network__ConfigurationUri")].value
+          pattern: "https://raw.githubusercontent.com/project-origin/chronicler/main/configs/networkConfiguration.json"
+
+  - it: when none set should fail
+    asserts:
+      - failedTemplate:
+          errorMessage: "Only one of url, yaml, json, or configMap must be set"
+
+  - it: when multiple set should fail
+    set:
+      networkConfig:
+        url: https://raw.githubusercontent.com/project-origin/chronicler/main/configs/networkConfiguration.json
+        json: |
+          {}
+    asserts:
+      - failedTemplate:
+          errorMessage: "Only one of url, yaml, json, or configMap must be set"
