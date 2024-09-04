@@ -8,7 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
-    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Moq" Version="4.20.71" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="AutoFixture" Version="4.18.1" />
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
@@ -29,8 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.27.3" />
-    <PackageReference Include="Grpc.Tools" Version="2.65.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.28.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.66.0" />
     <Protobuf Include="..\..\protos\verifier.proto" GrpcServices="Client" />
   </ItemGroup>
 
