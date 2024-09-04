@@ -1,4 +1,4 @@
-{{- include "networkConfig.configMap" $}}
+{{- include "common.networkConfig.configMap" $}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,18 +22,18 @@ spec:
         runAsNonRoot: true
       containers:
         - name: verifier-{{ $.Release.Name }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+          image: {{ include "common.image" (dict "root" $ "image" $.Values.image) }}
           args:
             - "--serve"
-          {{- include "limits" . | nindent 10 }}
+          {{- include "common.limits" . | nindent 10 }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           env:
-            {{- include "otlp.config" . | nindent 12 }}
-            {{- include "networkConfig.environmentVariables" .Values.networkConfig | nindent 12}}
+            {{- include "common.otlp.config" . | nindent 12 }}
+            {{- include "common.networkConfig.environmentVariables" .Values.networkConfig | nindent 12}}
           volumeMounts:
-            {{- include "networkConfig.volumeMounts" .Values.networkConfig | nindent 12}}
+            {{- include "common.networkConfig.volumeMounts" .Values.networkConfig | nindent 12}}
       volumes:
-        {{- include "networkConfig.volumes" $ | nindent 8}}
+        {{- include "common.networkConfig.volumes" $ | nindent 8}}
 ---

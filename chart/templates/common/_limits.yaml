@@ -1,4 +1,4 @@
-{{- define "limits" -}}
+{{- define "common.limits" -}}
 resources:
   requests:
     {{- if .Values.resources.requests.cpu }}

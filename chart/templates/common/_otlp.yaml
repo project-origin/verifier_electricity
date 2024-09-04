@@ -1,4 +1,4 @@
-{{- define "otlp.config" -}}
+{{- define "common.otlp.config" -}}
 - name: Otlp__Enabled
   value: {{ .Values.otlp.enabled | quote }}
 {{- if .Values.otlp.enabled }}

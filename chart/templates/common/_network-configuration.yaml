@@ -1,4 +1,4 @@
-{{- define "networkConfig.environmentVariables" -}}
+{{- define "common.networkConfig.environmentVariables" -}}
 {{- if not (or
       (and .url (not .yaml) (not .json) (not .configMap))
       (and (not .url) .yaml (not .json) (not .configMap))
@@ -26,7 +26,7 @@
 {{- end }}
 {{- end -}}
 
-{{- define "networkConfig.volumeMounts" -}}
+{{- define "common.networkConfig.volumeMounts" -}}
 {{- if .configMap -}}
 - name: config-volume
   mountPath: /etc/config/{{ .configMap.key }}
@@ -42,7 +42,7 @@
 {{- end }}
 {{- end -}}
 
-{{- define "networkConfig.volumes" -}}
+{{- define "common.networkConfig.volumes" -}}
 {{- if .Values.networkConfig.configMap }}
 - name: config-volume
   configMap:
@@ -65,7 +65,7 @@
 {{- end }}
 {{- end -}}
 
-{{- define "networkConfig.configMap" -}}
+{{- define "common.networkConfig.configMap" -}}
 {{- if (or .Values.networkConfig.yaml .Values.networkConfig.json) -}}
 apiVersion: v1
 kind: ConfigMap
