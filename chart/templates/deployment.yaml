@@ -25,7 +25,7 @@ spec:
           image: {{ include "common.image" (dict "root" $ "image" $.Values.image) }}
           args:
             - "--serve"
-          {{- include "common.limits" . | nindent 10 }}
+          {{- include "common.limits" .Values.resources | nindent 10 }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

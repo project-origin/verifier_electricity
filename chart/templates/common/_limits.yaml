@@ -1,18 +1,20 @@
 {{- define "common.limits" -}}
 resources:
   requests:
-    {{- if .Values.resources.requests.cpu }}
-    cpu: {{ .Values.resources.requests.cpu }}
+    {{- if .requests.cpu }}
+    cpu: {{ .requests.cpu }}
     {{- end }}
-    {{- if .Values.resources.requests.memory }}
-    memory: {{ .Values.resources.requests.memory }}
+    {{- if .requests.memory }}
+    memory: {{ .requests.memory }}
     {{- end }}
   limits:
-    {{- if .Values.resources.limits.cpu }}
-    cpu: {{ .Values.resources.limits.cpu }}
+    {{- if .limits.cpu }}
+    cpu: {{ .limits.cpu }}
     {{- end }}
-    {{- if .Values.resources.limits.memory }}
-    memory: {{ .Values.resources.limits.memory }}
+    {{- if .limits.memory }}
+    memory: {{ .limits.memory }}
     {{- end }}
-    ephemeral-storage: "1Mi"
+    {{- if .limits.ephemeralStorage }}
+    ephemeral-storage: {{ .limits.ephemeralStorage }}
+    {{- end }}
 {{- end -}}
