@@ -1,8 +1,8 @@
 {{- define "common.otlp.config" -}}
 - name: Otlp__Enabled
-  value: {{ .Values.otlp.enabled | quote }}
-{{- if .Values.otlp.enabled }}
+  value: {{ .enabled | quote }}
+{{- if .enabled }}
 - name: Otlp__Endpoint
-  value: {{ required "otel.endpoint is required when enabled" .Values.otlp.endpoint | quote }}
+  value: {{ required "otel.endpoint is required when enabled" .endpoint | quote }}
 {{- end }}
 {{- end -}}
