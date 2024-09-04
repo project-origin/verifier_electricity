@@ -50,7 +50,7 @@ kind create cluster --name ${cluster_name}
 kubectl create namespace ${namespace}
 
 # build docker image
-docker build -f src/Electricity.Dockerfile -t ghcr.io/project-origin/electricity-server:test src/
+make build-container
 
 # load docker image into cluster
 kind load --name ${cluster_name} docker-image ghcr.io/project-origin/electricity-server:test
