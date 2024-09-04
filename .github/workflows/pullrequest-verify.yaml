@@ -15,11 +15,14 @@ jobs:
   verify-renovate-config:
     uses: project-origin/.github/.github/workflows/reusable-verify-renovate.yaml@b1a1034591b6f491085a0d9d259ae3b486487701
 
+  verify-chart:
+    uses: project-origin/.github/.github/workflows/reusable-verify-chart.yaml@32ff33baaf1c9960ef1f01ef4ee554225db1972c
+
   verify-container-build:
     uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@b1a1034591b6f491085a0d9d259ae3b486487701
     with:
       imagename: ghcr.io/project-origin/electricity-server
       version: test
-      context: ./src
-      dockerfile: ./src/ProjectOrigin.Electricity.Server/Dockerfile
+      context: .
+      dockerfile: ./Electricity.Dockerfile
       push: false

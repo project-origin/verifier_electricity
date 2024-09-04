@@ -1,0 +1,39 @@
+{{- include "common.networkConfig.configMap" $}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verifier-{{ $.Release.Name }}-deployment
+  labels:
+    app: verifier-{{ required "Release name must be set" $.Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: verifier-{{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: verifier-{{ $.Release.Name }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1654
+        runAsNonRoot: true
+      containers:
+        - name: verifier-{{ $.Release.Name }}
+          image: {{ include "common.image" (dict "root" $ "image" $.Values.image) }}
+          args:
+            - "--serve"
+          {{- include "common.limits" .Values.resources | nindent 10 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            {{- include "common.otlp.config" .Values.otlp | nindent 12 }}
+            {{- include "common.networkConfig.environmentVariables" .Values.networkConfig | nindent 12}}
+          volumeMounts:
+            {{- include "common.networkConfig.volumeMounts" .Values.networkConfig | nindent 12}}
+      volumes:
+        {{- include "common.networkConfig.volumes" $ | nindent 8}}
+---
