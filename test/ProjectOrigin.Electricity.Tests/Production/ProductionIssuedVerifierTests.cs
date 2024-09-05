@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using AutoFixture;
 using Google.Protobuf.WellKnownTypes;
@@ -35,7 +34,7 @@ public class ProductionIssuedVerifierTests
                 {IssuerArea, new AreaInfo(){
                     IssuerKeys = new List<KeyInfo>(){
                         new KeyInfo(){
-                            PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))
+                            PublicKey = _issuerKey.PublicKey
                         }
                     }
                 }}

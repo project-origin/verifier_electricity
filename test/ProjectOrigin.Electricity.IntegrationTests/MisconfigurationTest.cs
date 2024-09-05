@@ -7,6 +7,7 @@ using System.Text;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.TestCommon.Fixtures;
 using ProjectOrigin.TestCommon;
+using YamlDotNet.Core;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
@@ -24,6 +25,56 @@ public class MisconfigurationTest
     }
 
     [Fact]
+    public void ValidYaml()
+    {
+        var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+
+        ConfigureNetwork($"""
+        registries:
+          MyRegistry:
+            url: https://example.com
+        areas:
+          {Area}:
+            issuerKeys:
+              - publicKey: {Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))}
+        """);
+
+        var channel = _serviceFixture.Channel;
+
+        Assert.NotNull(channel);
+    }
+
+    [Fact]
+    public void ValidJson()
+    {
+        var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+
+        ConfigureNetwork(string.Format(@"
+        {{
+            ""Registries"": {{
+                ""MyRegistry"": {{
+                    ""Url"": ""https://example.com""
+                }}
+            }},
+            ""Areas"": {{
+                ""{0}"": {{
+                    ""IssuerKeys"": [
+                        {{
+                            ""PublicKey"": ""{1}""
+                        }}
+                    ]
+                }}
+            }}
+        }}", Area, Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))), ".json");
+
+        var channel = _serviceFixture.Channel;
+
+        Assert.NotNull(channel);
+    }
+
+
+
+    [Fact]
     public void OptionsValidationException_IfInvalidKeyFormat()
     {
         ConfigureNetwork($"""
@@ -34,8 +85,8 @@ public class MisconfigurationTest
               - publicKey: {Convert.ToBase64String(_fixture.Create<byte[]>())}
         """);
 
-        var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
-        Assert.Equal($"A issuer key ”{Area}” is a invalid format.", ex.Message);
+        var ex = Assert.Throws<YamlException>(() => { var channel = _serviceFixture.Channel; });
+        Assert.Equal("Invalid public key format.", ex.InnerException?.Message);
     }
 
     [Fact]
@@ -51,8 +102,8 @@ public class MisconfigurationTest
               - publicKey: {Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))}
         """);
 
-        var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
-        Assert.Equal($"A issuer key ”{Area}” is a invalid format.", ex.Message);
+        var ex = Assert.Throws<YamlException>(() => { var channel = _serviceFixture.Channel; });
+        Assert.Equal("Invalid public key format.", ex.InnerException?.Message);
     }
 
     [Fact]
@@ -65,16 +116,6 @@ public class MisconfigurationTest
 
         var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
         Assert.Equal("No Issuer areas configured.", ex.Message);
-    }
-
-    private void ConfigureNetwork(string yamlConfig)
-    {
-        var configFile = TempFile.WriteAllText(yamlConfig, ".yaml");
-
-        _serviceFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
-        {
-         {"network:ConfigurationUri", "file://" + configFile},
-        });
     }
 
     [Fact]
@@ -95,4 +136,15 @@ public class MisconfigurationTest
         var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
         Assert.Equal("Invalid URL address specified for registry ”MyRegistry”", ex.Message);
     }
+
+    private void ConfigureNetwork(string yamlConfig, string extension = ".yaml")
+    {
+        var configFile = TempFile.WriteAllText(yamlConfig, extension);
+
+        _serviceFixture.ConfigureHostConfiguration(new Dictionary<string, string?>()
+        {
+         {"network:ConfigurationUri", "file://" + configFile},
+        });
+    }
+
 }

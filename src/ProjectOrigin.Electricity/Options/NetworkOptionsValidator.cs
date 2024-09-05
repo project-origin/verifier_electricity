@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
-using System.Text;
 using Microsoft.Extensions.Options;
-using ProjectOrigin.HierarchicalDeterministicKeys;
 
 namespace ProjectOrigin.Electricity.Options;
 
@@ -15,22 +13,6 @@ public class NetworkOptionsValidator : IValidateOptions<NetworkOptions>
 
         if (options.Areas.Any(x => x.Value.IssuerKeys is null || x.Value.IssuerKeys.Count == 0))
             return ValidateOptionsResult.Fail("No Issuer keys configured.");
-
-        foreach (var area in options.Areas)
-        {
-            foreach (var keyInfo in area.Value.IssuerKeys)
-            {
-                try
-                {
-                    var keyText = Encoding.UTF8.GetString(Convert.FromBase64String(keyInfo.PublicKey));
-                    Algorithms.Ed25519.ImportPublicKeyText(keyText);
-                }
-                catch (Exception)
-                {
-                    return ValidateOptionsResult.Fail($"A issuer key ”{area.Key}” is a invalid format.");
-                }
-            }
-        }
 
         if (options.Registries is null || options.Registries.Count == 0)
             return ValidateOptionsResult.Fail("No registries configured.");

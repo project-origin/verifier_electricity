@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using AutoFixture;
 using Microsoft.Extensions.Options;
@@ -33,7 +31,7 @@ public class ConsumptionIssuedVerifierTests
                 {IssuerArea, new AreaInfo(){
                     IssuerKeys = new List<KeyInfo>(){
                         new KeyInfo(){
-                            PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(_issuerKey.PublicKey.ExportPkixText()))
+                            PublicKey = _issuerKey.PublicKey
                         }
                     }
                 }}
