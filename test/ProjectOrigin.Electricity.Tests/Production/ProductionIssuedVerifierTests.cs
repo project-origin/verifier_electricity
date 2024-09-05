@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoFixture;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.Extensions.Options;
-using Moq;
+using MsOptions = Microsoft.Extensions.Options.Options;
 using ProjectOrigin.Electricity.Extensions;
 using ProjectOrigin.Electricity.Models;
 using ProjectOrigin.Electricity.Options;
@@ -26,21 +25,23 @@ public class ProductionIssuedVerifierTests
     {
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
-        var optionsMock = new Mock<IOptionsMonitor<NetworkOptions>>();
-        optionsMock.Setup(obj => obj.CurrentValue).Returns(new NetworkOptions()
+        var networkOptions = new NetworkOptions()
         {
             Registries = new Dictionary<string, RegistryInfo>(),
-            Areas = new Dictionary<string, AreaInfo>(){
-                {IssuerArea, new AreaInfo(){
-                    IssuerKeys = new List<KeyInfo>(){
-                        new KeyInfo(){
-                            PublicKey = _issuerKey.PublicKey
+            Areas = new Dictionary<string, AreaInfo>
+            {
+                {
+                    IssuerArea, new AreaInfo() {
+                        IssuerKeys = new List<KeyInfo>(){
+                            new KeyInfo(){
+                                PublicKey = _issuerKey.PublicKey
+                            }
                         }
                     }
-                }}
-            },
-        });
-        var issuerService = new GridAreaIssuerOptionsService(optionsMock.Object);
+                }
+            }
+        };
+        var issuerService = new GridAreaIssuerOptionsService(MsOptions.Create(networkOptions));
 
         _verifier = new IssuedEventVerifier(issuerService);
     }
