@@ -22,6 +22,9 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
         if (certificate is null)
             return new VerificationResult.Invalid("Certificate does not exist");
 
+        if (certificate.IsCertificateWithdrawn)
+            return new VerificationResult.Invalid("Certificate is withdrawn");
+
         GranularCertificate? otherCertificate;
 
         if (certificate.Type == V1.GranularCertificateType.Production)

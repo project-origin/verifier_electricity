@@ -22,6 +22,9 @@ public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
         if (certificate is null)
             return new VerificationResult.Invalid("Certificate does not exist");
 
+        if (certificate.IsCertificateWithdrawn)
+            return new VerificationResult.Invalid("Certificate is withdrawn");
+
         var slice = certificate.GetAllocation(payload.AllocationId);
         if (slice is null)
             return new VerificationResult.Invalid("Allocation does not exist");

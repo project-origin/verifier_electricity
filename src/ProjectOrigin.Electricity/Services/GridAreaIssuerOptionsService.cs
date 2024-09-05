@@ -12,16 +12,16 @@ namespace ProjectOrigin.Electricity.Services;
 
 public class GridAreaIssuerOptionsService : IGridAreaIssuerService
 {
-    private readonly IOptionsMonitor<NetworkOptions> _options;
+    private readonly IOptions<NetworkOptions> _options;
 
-    public GridAreaIssuerOptionsService(IOptionsMonitor<NetworkOptions> options)
+    public GridAreaIssuerOptionsService(IOptions<NetworkOptions> options)
     {
         _options = options;
     }
 
     public IEnumerable<IPublicKey> GetAreaPublicKey(string area)
     {
-        if (_options.CurrentValue.Areas.TryGetValue(area, out var areaInfo))
+        if (_options.Value.Areas.TryGetValue(area, out var areaInfo))
         {
             return areaInfo.IssuerKeys.Select(x =>
             {

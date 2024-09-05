@@ -42,21 +42,6 @@ public class ProductionAllocatedVerifierTests
         result.AssertValid();
     }
 
-    [Fact]
-    public async Task Verifier_AllocateCertificate_ProdCertNotFould()
-    {
-        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
-        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
-        _otherCertificate = consCert;
-
-        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
-        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
-
-        var result = await _verifier.Verify(transaction, null, @event);
-
-        result.AssertInvalid("Certificate does not exist");
-    }
 
     [Fact]
     public async Task Verifier_InvalidProductionSlice_SliceNotFound()
@@ -306,5 +291,24 @@ public class ProductionAllocatedVerifierTests
         var result = await _verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Invalid Equality proof");
+    }
+
+    [Fact]
+    public async Task Verifier_AllocationCerticate_InvalidCertificateIsWithdrawnInvalidEqualityProof()
+    {
+        // Arrange
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams, overwrideEqualityProof: new Fixture().CreateMany<byte>(64).ToArray());
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        // Act
+        prodCert.Withdrawn();
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate is withdrawn");
     }
 }

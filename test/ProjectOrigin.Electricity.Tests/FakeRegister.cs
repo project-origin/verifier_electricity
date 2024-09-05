@@ -102,6 +102,12 @@ internal static class FakeRegister
         certificate.Apply(@event);
     }
 
+    internal static void Withdrawn(this GranularCertificate certificate)
+    {
+        var @event = new V1.WithdrawnEvent();
+        certificate.Apply(@event);
+    }
+
     internal static V1.Commitment InvalidCommitment(uint quantity = 150, string label = "hello")
     {
         var privateCommitment = new SecretCommitmentInfo(quantity);

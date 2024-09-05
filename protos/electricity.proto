@@ -48,6 +48,10 @@ message ClaimedEvent {
     project_origin.common.v1.Uuid allocation_id = 2;
 }
 
+message WithdrawnEvent {
+
+}
+
 enum GranularCertificateType {
     INVALID = 0;
     CONSUMPTION = 1;
