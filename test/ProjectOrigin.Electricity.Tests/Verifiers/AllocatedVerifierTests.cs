@@ -5,13 +5,14 @@ using ProjectOrigin.Electricity.Interfaces;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using Xunit;
-using ProjectOrigin.Electricity.Tests;
 
-public class ConsumptionAllocatedVerifierTests
+namespace ProjectOrigin.Electricity.Tests;
+
+public class AllocatedVerifierTests
 {
     private AllocatedEventVerifier _verifier;
 
-    public ConsumptionAllocatedVerifierTests()
+    public AllocatedVerifierTests()
     {
         var modelLoaderMock = new Mock<IRemoteModelLoader>();
 
