@@ -12,7 +12,6 @@ public class GranularCertificate
     public V1.DateInterval Period => _issued.Period;
     public string GridArea => _issued.GridArea;
     public bool IsCertificateWithdrawn { get; private set; } = false;
-    
     private readonly V1.IssuedEvent _issued;
     private readonly Dictionary<ByteString, CertificateSlice> _availableSlices = new Dictionary<ByteString, CertificateSlice>();
     private readonly Dictionary<Common.V1.Uuid, AllocationSlice> _allocationSlices = new Dictionary<Common.V1.Uuid, AllocationSlice>();
