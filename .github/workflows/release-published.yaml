@@ -6,12 +6,12 @@ on:
 
 jobs:
   define-version:
-    uses: project-origin/.github/.github/workflows/reusable-tag-version.yaml@e7bf04666fcd1bcbec41e09b012fa3ee242824b9
+    uses: project-origin/.github/.github/workflows/reusable-tag-version.yaml@a20587c28ae46b4753437c9a2ae195e26833bb6a
 
   publish-container:
     needs:
       - define-version
-    uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@e7bf04666fcd1bcbec41e09b012fa3ee242824b9
+    uses: project-origin/.github/.github/workflows/reusable-build-push-container-ghcr.yaml@a20587c28ae46b4753437c9a2ae195e26833bb6a
     with:
       imagename: ghcr.io/project-origin/electricity-server
       version: ${{ needs.define-version.outputs.version }}
@@ -23,7 +23,7 @@ jobs:
     needs:
       - define-version
       - publish-container
-    uses: project-origin/.github/.github/workflows/reusable-publish-chart.yaml@e7bf04666fcd1bcbec41e09b012fa3ee242824b9
+    uses: project-origin/.github/.github/workflows/reusable-publish-chart.yaml@a20587c28ae46b4753437c9a2ae195e26833bb6a
     with:
       version: ${{ needs.define-version.outputs.version }}
       chart_folder: chart/
