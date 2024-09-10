@@ -7,17 +7,17 @@ using Xunit;
 
 namespace ProjectOrigin.Electricity.Tests;
 
-public class ProductionTransferredVerifierTests
+public class TransferredVerifierTests
 {
     private TransferredEventVerifier _verifier;
 
-    public ProductionTransferredVerifierTests()
+    public TransferredVerifierTests()
     {
         _verifier = new TransferredEventVerifier();
     }
 
     [Fact]
-    public async Task ProductionTransferredVerifierTests_TransferCertificate_Valid()
+    public async Task TransferredVerifierTests_TransferCertificate_Valid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -32,7 +32,7 @@ public class ProductionTransferredVerifierTests
     }
 
     [Fact]
-    public async Task ProductionTransferredVerifierTests_NullCertificate_Invalid()
+    public async Task TransferredVerifierTests_NullCertificate_Invalid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -47,7 +47,7 @@ public class ProductionTransferredVerifierTests
     }
 
     [Fact]
-    public async Task ProductionTransferredVerifierTests_InvalidPublicKey_InvalidFormat()
+    public async Task TransferredVerifierTests_InvalidPublicKey_InvalidFormat()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -67,7 +67,7 @@ public class ProductionTransferredVerifierTests
     }
 
     [Fact]
-    public async Task ProductionTransferredVerifierTests_FakeSlice_SliceNotFound()
+    public async Task TransferredVerifierTests_FakeSlice_SliceNotFound()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -83,7 +83,7 @@ public class ProductionTransferredVerifierTests
     }
 
     [Fact]
-    public async Task ProductionTransferredVerifierTests_WrongKey_InvalidSignature()
+    public async Task TransferredVerifierTests_WrongKey_InvalidSignature()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -96,4 +96,24 @@ public class ProductionTransferredVerifierTests
 
         result.AssertInvalid("Invalid signature for slice");
     }
+
+    [Fact]
+    public async Task TransferredVerifierTests_CertificateIsWithdrawn_Invalid()
+    {
+        // Arrange
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+
+        var @event = FakeRegister.CreateTransferEvent(cert, sourceParams, newOwnerKey.PublicKey.ToProto());
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        // Act
+        cert.Withdrawn();
+        var result = await _verifier.Verify(transaction, cert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate is withdrawn");
+    }
+
 }

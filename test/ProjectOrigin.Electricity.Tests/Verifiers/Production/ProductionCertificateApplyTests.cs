@@ -60,7 +60,7 @@ public class ProductionCertificateApplyTests
     }
 
     [Fact]
-    public void ConsumptionCertificate_Create()
+    public void ProductionCertificate_Create()
     {
 
         var registry = _fix.Create<string>();
@@ -104,7 +104,7 @@ public class ProductionCertificateApplyTests
     }
 
     [Fact]
-    public void ConsumptionCertificate_Apply_SliceEvent()
+    public void ProductionCertificate_Apply_SliceEvent()
     {
         var allocationId = Guid.NewGuid().ToProto();
         var (cert, slice0) = Create();
@@ -139,7 +139,7 @@ public class ProductionCertificateApplyTests
     }
 
     [Fact]
-    public void ConsumptionCertificate_Apply_TransferEvent()
+    public void ProductionCertificate_Apply_TransferEvent()
     {
         var allocationId = Guid.NewGuid().ToProto();
         var (cert, slice0) = Create();
@@ -164,7 +164,7 @@ public class ProductionCertificateApplyTests
     }
 
     [Fact]
-    public void ConsumptionCertificate_Apply_AllocatedEvent()
+    public void ProductionCertificate_Apply_AllocatedEvent()
     {
         var allocationId = Guid.NewGuid().ToProto();
         var consumptionId = CreateId();
@@ -190,7 +190,7 @@ public class ProductionCertificateApplyTests
     }
 
     [Fact]
-    public void ConsumptionCertificate_Apply_ClaimedEvent()
+    public void ProductionCertificate_Apply_ClaimedEvent()
     {
         var allocationId = Guid.NewGuid().ToProto();
         var consumptionId = CreateId();
@@ -219,5 +219,24 @@ public class ProductionCertificateApplyTests
         Assert.Null(cert.GetAllocation(allocationId));
         Assert.False(cert.HasAllocation(allocationId));
         Assert.True(cert.HasClaim(allocationId));
+    }
+
+    [Fact]
+    public void ProductionCertificate_Apply_WithdrawnEvent()
+    {
+        var (cert, _) = Create();
+        var @event = new V1.WithdrawnEvent();
+
+        cert.Apply(@event);
+
+        Assert.True(cert.IsCertificateWithdrawn);
+    }
+
+    [Fact]
+    public void ProductionCertificate_Default_WithdrawnIsFalse()
+    {
+        var (cert, _) = Create();
+
+        Assert.False(cert.IsCertificateWithdrawn);
     }
 }

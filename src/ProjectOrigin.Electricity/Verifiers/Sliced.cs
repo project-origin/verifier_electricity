@@ -15,6 +15,9 @@ public class SlicedEventVerifier : IEventVerifier<V1.SlicedEvent>
         if (certificate is null)
             return new VerificationResult.Invalid("Certificate does not exist");
 
+        if (certificate.IsCertificateWithdrawn)
+            return new VerificationResult.Invalid("Certificate is withdrawn");
+
         var certificateSlice = certificate.GetCertificateSlice(payload.SourceSliceHash);
         if (certificateSlice is null)
             return new VerificationResult.Invalid("Slice not found");
