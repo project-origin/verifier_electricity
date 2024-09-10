@@ -255,7 +255,16 @@ internal static class FakeRegister
         };
     }
 
-    private static Common.V1.FederatedStreamId CreateFederatedId() => new Common.V1.FederatedStreamId
+    internal static V1.UnclaimedEvent CreateUnclaimedEvent(Guid allocationId)
+    {
+        return new V1.UnclaimedEvent()
+        {
+            AllocationId = allocationId.ToProto(),
+        };
+    }
+
+
+    internal static Common.V1.FederatedStreamId CreateFederatedId(string? registry = Registry) => new Common.V1.FederatedStreamId
     {
         Registry = Registry,
         StreamId = new Common.V1.Uuid

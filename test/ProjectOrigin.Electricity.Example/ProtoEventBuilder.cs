@@ -125,6 +125,19 @@ public class ProtoEventBuilder
         };
     }
 
+    public static Electricity.V1.WithdrawnEvent CreateWithdrawnEvent()
+    {
+        return new Electricity.V1.WithdrawnEvent();
+    }
+
+    public static Electricity.V1.UnclaimedEvent CreateUnclaimedEvent(Guid allocationId)
+    {
+        return new Electricity.V1.UnclaimedEvent
+        {
+            AllocationId = new Common.V1.Uuid { Value = allocationId.ToString() }
+        };
+    }
+
     public static FederatedStreamId ToCertId(string registry, Guid certId)
     {
         return new Common.V1.FederatedStreamId
