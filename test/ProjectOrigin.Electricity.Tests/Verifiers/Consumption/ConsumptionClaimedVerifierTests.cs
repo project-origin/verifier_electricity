@@ -23,7 +23,7 @@ public class ConsumptionClaimedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionClaimedVerifier_Valid()
+    public async Task ConsumptionClaimedVerifier_Valid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -42,7 +42,27 @@ public class ConsumptionClaimedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionClaimedVerifier_Invalid_AllocationNotExist()
+    public async Task ConsumptionClaimedVerifier_InvalidBecauseOfWithdrawnState()
+    {
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+        var allocationId = prodCert.Allocated(consCert, prodParams, consParams);
+        consCert.Allocated(allocationId, prodCert, prodParams, consParams);
+        prodCert.Claimed(allocationId);
+        _otherCertificate = prodCert;
+        _otherCertificate.Withdrawn();
+
+        var @event = FakeRegister.CreateClaimedEvent(allocationId, consCert.Id);
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        var result = await _verifier.Verify(transaction, consCert, @event);
+
+        result.AssertInvalid("ProductionCertificate is withdrawn");
+    }
+
+    [Fact]
+    public async Task ConsumptionClaimedVerifier_Invalid_AllocationNotExist()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -60,7 +80,7 @@ public class ConsumptionClaimedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionClaimedVerifier_Invalid_InvalidSignature()
+    public async Task ConsumptionClaimedVerifier_Invalid_InvalidSignature()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var otherKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -80,7 +100,7 @@ public class ConsumptionClaimedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionClaimedVerifier_Invalid_ConsumptionNotFound()
+    public async Task ConsumptionClaimedVerifier_Invalid_ConsumptionNotFound()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -99,7 +119,7 @@ public class ConsumptionClaimedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionClaimedVerifier_Invalid_ConsumptionNotAllocated()
+    public async Task ConsumptionClaimedVerifier_Invalid_ConsumptionNotAllocated()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
