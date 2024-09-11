@@ -110,7 +110,7 @@ public class WithoutWalletFlow
         return 0;
     }
 
-    private async Task SendUnclaim(Guid allocationId, IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
+    private static async Task SendUnclaim(Guid allocationId, IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
     {
         var withdrawnEvent = ProtoEventBuilder.CreateUnclaimedEvent(allocationId);
 
@@ -121,7 +121,7 @@ public class WithoutWalletFlow
         await prodClient.SendTransactionAndWait(signedTransaction);
     }
 
-    private async Task SendWithdraw(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
+    private static async Task SendWithdraw(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
     {
         var withdrawnEvent = ProtoEventBuilder.CreateWithdrawnEvent();
 
