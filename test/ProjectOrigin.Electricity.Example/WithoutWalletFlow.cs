@@ -99,7 +99,35 @@ public class WithoutWalletFlow
         Console.WriteLine($"Claiming Consumption Granular Certificate");
         await SendClaim(ownerKey, consClient, consCertId, allocationId);
 
+        // ------------------  withdraw production ------------------
+        Console.WriteLine($"Withdraw Production Certificate");
+        await SendWithdraw(ownerKey, prodClient, prodCertId);
+
+        // ------------------  unclaim consumption ------------------
+        Console.WriteLine($"Unclaim Consumption Certificate");
+        await SendUnclaim(allocationId, ownerKey, consClient, consCertId);
+
         return 0;
+    }
+
+    private static async Task SendUnclaim(Guid allocationId, IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient client, FederatedStreamId certId)
+    {
+        var withdrawnEvent = ProtoEventBuilder.CreateUnclaimedEvent(allocationId);
+
+        // Sign the event as a transaction
+        var signedTransaction = ownerKey.SignTransaction(certId, withdrawnEvent);
+
+        // Send transaction to registry, and wait for committed state
+        await client.SendTransactionAndWait(signedTransaction);
+    }
+
+    private static async Task SendWithdraw(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient client, FederatedStreamId certId)
+    {
+        var withdrawnEvent = ProtoEventBuilder.CreateWithdrawnEvent();
+
+        var signedTransaction = ownerKey.SignTransaction(certId, withdrawnEvent);
+
+        await client.SendTransactionAndWait(signedTransaction);
     }
 
     private static async Task SendClaim(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId, Guid allocationId)

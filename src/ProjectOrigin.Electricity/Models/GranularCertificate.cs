@@ -61,10 +61,19 @@ public class GranularCertificate
         IsCertificateWithdrawn = true;
     }
 
+    public void Apply(V1.UnclaimedEvent e)
+    {
+        var slice = GetClaim(e.AllocationId) ?? throw new KeyNotFoundException($"claim not found ”{e.AllocationId}” - Invalid state");
+        _claimedSlices.Remove(e.AllocationId);
+
+        AddAvailableSlice(slice.Commitment, slice.Owner);
+    }
+
     public CertificateSlice? GetCertificateSlice(ByteString id) => _availableSlices.GetValueOrDefault(id);
     public bool HasClaim(Common.V1.Uuid allocationId) => _claimedSlices.ContainsKey(allocationId);
     public bool HasAllocation(Common.V1.Uuid allocationId) => _allocationSlices.ContainsKey(allocationId);
     public AllocationSlice? GetAllocation(Common.V1.Uuid allocationId) => _allocationSlices.GetValueOrDefault(allocationId);
+    public AllocationSlice? GetClaim(Common.V1.Uuid allocationId) => _claimedSlices.GetValueOrDefault(allocationId);
 
     protected CertificateSlice TakeAvailableSlice(ByteString sliceHash)
     {
