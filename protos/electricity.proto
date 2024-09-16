@@ -53,7 +53,7 @@ message WithdrawnEvent {
 }
 
 message UnclaimedEvent {
-    project_origin.common.v1.Uuid allocation_id = 2;
+    project_origin.common.v1.Uuid allocation_id = 1;
 }
 
 enum GranularCertificateType {
