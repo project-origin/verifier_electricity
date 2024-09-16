@@ -110,24 +110,24 @@ public class WithoutWalletFlow
         return 0;
     }
 
-    private static async Task SendUnclaim(Guid allocationId, IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
+    private static async Task SendUnclaim(Guid allocationId, IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient client, FederatedStreamId certId)
     {
         var withdrawnEvent = ProtoEventBuilder.CreateUnclaimedEvent(allocationId);
 
         // Sign the event as a transaction
-        var signedTransaction = ownerKey.SignTransaction(prodCertId, withdrawnEvent);
+        var signedTransaction = ownerKey.SignTransaction(certId, withdrawnEvent);
 
         // Send transaction to registry, and wait for committed state
-        await prodClient.SendTransactionAndWait(signedTransaction);
+        await client.SendTransactionAndWait(signedTransaction);
     }
 
-    private static async Task SendWithdraw(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId)
+    private static async Task SendWithdraw(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient client, FederatedStreamId certId)
     {
         var withdrawnEvent = ProtoEventBuilder.CreateWithdrawnEvent();
 
-        var signedTransaction = ownerKey.SignTransaction(prodCertId, withdrawnEvent);
+        var signedTransaction = ownerKey.SignTransaction(certId, withdrawnEvent);
 
-        await prodClient.SendTransactionAndWait(signedTransaction);
+        await client.SendTransactionAndWait(signedTransaction);
     }
 
     private static async Task SendClaim(IHDPrivateKey ownerKey, RegistryService.RegistryServiceClient prodClient, FederatedStreamId prodCertId, Guid allocationId)
