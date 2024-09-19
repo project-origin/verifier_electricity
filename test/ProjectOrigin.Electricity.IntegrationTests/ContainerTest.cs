@@ -21,7 +21,7 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
     private readonly ITestOutputHelper _outputHelper;
     private readonly IFutureDockerImage _image;
     private readonly IContainer _container;
-    private readonly string _tempDockerPath;
+    private readonly ModifiedDockerfile _modifiedDockerfile;
 
     public ContainerTest(ITestOutputHelper outputHelper)
     {
@@ -29,11 +29,13 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
         var solutionDirectory = CommonDirectoryPath.GetSolutionDirectory().DirectoryPath;
 
         // Testcontainers doesn't support some functionality in Dockerfiles
-        _tempDockerPath = CreateTempDockerfileForTestcontainer(Path.Combine(solutionDirectory, DockerfilePath));
+        _modifiedDockerfile = new ModifiedDockerfile(Path.Combine(solutionDirectory, DockerfilePath), content => content
+            .Replace(" --platform=$BUILDPLATFORM", "") // not supported by Testcontainers
+            .Replace("-jammy-chiseled-extra", "")); // not supported by Testcontainers because of user permissions
 
         _image = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(solutionDirectory)
-            .WithDockerfile(Path.GetRelativePath(solutionDirectory, _tempDockerPath))
+            .WithDockerfile(_modifiedDockerfile.FileName)
             .WithLogger(new CustomActionLogger("ImageBuilder", outputHelper.WriteLine))
             .Build();
 
@@ -61,18 +63,6 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
                 .Build();
     }
 
-    private static string CreateTempDockerfileForTestcontainer(string source)
-    {
-        var target = $"{source}.tmp";
-
-        var content = File.ReadAllText(source)
-            .Replace(" --platform=$BUILDPLATFORM", "") // not supported by Testcontainers
-            .Replace("-jammy-chiseled-extra", ""); // not supported by Testcontainers because of user permissions
-
-        File.WriteAllText(target, content);
-        return target;
-    }
-
     public async Task InitializeAsync()
     {
         try
@@ -91,8 +81,7 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (File.Exists(_tempDockerPath))
-            File.Delete(_tempDockerPath);
+        _modifiedDockerfile.Dispose();
         await _container.StopAsync();
     }
 

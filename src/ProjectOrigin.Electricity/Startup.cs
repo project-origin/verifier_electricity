@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -40,7 +41,7 @@ public class Startup
         services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
         services.AddTransient<IModelHydrater, ElectricityModelHydrater>();
         services.AddTransient<IGridAreaIssuerService, GridAreaIssuerOptionsService>();
-
+        services.AddSingleton(new JsonSerializerOptions());
         services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
         services.AddHttpClient();
         services.ConfigureUriOptionsLoader<NetworkOptions>("network");
