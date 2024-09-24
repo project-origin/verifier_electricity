@@ -229,7 +229,8 @@ internal static class FakeRegister
         Common.V1.FederatedStreamId consumptionId,
         SecretCommitmentInfo productionSlice,
         SecretCommitmentInfo consumptionSlice,
-        byte[]? overwrideEqualityProof = null
+        byte[]? overwrideEqualityProof = null,
+        byte[]? chroniclerSignature = null
         )
     {
         return new V1.AllocatedEvent()
@@ -239,7 +240,8 @@ internal static class FakeRegister
             ConsumptionCertificateId = consumptionId,
             ProductionSourceSliceHash = productionSlice.ToSliceId(),
             ConsumptionSourceSliceHash = consumptionSlice.ToSliceId(),
-            EqualityProof = ByteString.CopyFrom(overwrideEqualityProof ?? SecretCommitmentInfo.CreateEqualityProof(productionSlice, consumptionSlice, allocationId.ToString()))
+            EqualityProof = ByteString.CopyFrom(overwrideEqualityProof ?? SecretCommitmentInfo.CreateEqualityProof(productionSlice, consumptionSlice, allocationId.ToString())),
+            ChroniclerSignature = chroniclerSignature == null ? ByteString.Empty : ByteString.CopyFrom(chroniclerSignature)
         };
     }
 
