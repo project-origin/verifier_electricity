@@ -30,7 +30,7 @@ public class Flow
         // Decode text key from base64 string
         var keyText = Encoding.UTF8.GetString(Convert.FromBase64String(IssuerKey));
 
-        // Import the key for the issuing body of the area;
+        // Import the key for the issuing body of the area
         var issuerKey = Algorithms.Ed25519.ImportPrivateKeyText(keyText);
 
         // Create channel and client
