@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoFixture;
 using Google.Protobuf.WellKnownTypes;
-using MsOptions = Microsoft.Extensions.Options.Options;
 using ProjectOrigin.Electricity.Extensions;
 using ProjectOrigin.Electricity.Models;
-using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.Electricity.Services;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
@@ -15,39 +12,24 @@ using Xunit;
 
 namespace ProjectOrigin.Electricity.Tests;
 
-public class ProductionIssuedVerifierTests
+public class IssuedVerifierTests
 {
     const string IssuerArea = "DK1";
     private IPrivateKey _issuerKey;
     private IssuedEventVerifier _verifier;
 
-    public ProductionIssuedVerifierTests()
+    public IssuedVerifierTests()
     {
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
-        var networkOptions = new NetworkOptions()
-        {
-            Registries = new Dictionary<string, RegistryInfo>(),
-            Areas = new Dictionary<string, AreaInfo>
-            {
-                {
-                    IssuerArea, new AreaInfo() {
-                        IssuerKeys = new List<KeyInfo>(){
-                            new KeyInfo(){
-                                PublicKey = _issuerKey.PublicKey
-                            }
-                        }
-                    }
-                }
-            }
-        };
-        var issuerService = new GridAreaIssuerOptionsService(MsOptions.Create(networkOptions));
+        var options = new NetworkOptionsFake(IssuerArea, _issuerKey);
+        var issuerService = new GridAreaIssuerOptionsService(options);
 
         _verifier = new IssuedEventVerifier(issuerService);
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_IssueCertificate_Success()
+    public async Task IssuedVerifier_IssueCertificate_Success()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent();
         var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
@@ -58,7 +40,7 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_IssueCertificateWithPublicQuantity_Success()
+    public async Task IssuedVerifier_IssueCertificateWithPublicQuantity_Success()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent(publicQuantity: true);
         var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
@@ -71,18 +53,19 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_CertificateExists_Fail()
+    public async Task IssuedVerifier_CertificateExists_Fail()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent();
         var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
+        var certifcate = new GranularCertificate(@event);
 
-        var result = await _verifier.Verify(transaction, new GranularCertificate(@event), @event);
+        var result = await _verifier.Verify(transaction, certifcate, @event);
 
         result.AssertInvalid($"Certificate with id ”{@event.CertificateId.StreamId}” already exists");
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_QuantityCommitmentInvalid_Fail()
+    public async Task IssuedVerifier_QuantityCommitmentInvalid_Fail()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent(quantityCommitmentOverride: FakeRegister.InvalidCommitment());
         var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);
@@ -93,7 +76,7 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_PeriodInvalid_ToLong()
+    public async Task IssuedVerifier_PeriodInvalid_ToLong()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent(periodOverride: new V1.DateInterval()
         {
@@ -109,7 +92,7 @@ public class ProductionIssuedVerifierTests
 
 
     [Fact]
-    public async Task ProductionIssuedVerifier_PeriodInvalid_ToSmall()
+    public async Task IssuedVerifier_PeriodInvalid_ToSmall()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent(periodOverride: new V1.DateInterval()
         {
@@ -124,7 +107,7 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_InvalidOwner_Fail()
+    public async Task IssuedVerifier_InvalidOwner_Fail()
     {
         var randomOwnerKeyData = new V1.PublicKey
         {
@@ -140,7 +123,7 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_InvalidSignature_Fail()
+    public async Task IssuedVerifier_InvalidSignature_Fail()
     {
         var invalidKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
@@ -153,7 +136,7 @@ public class ProductionIssuedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionIssuedVerifier_NoIssuerForArea_Fail()
+    public async Task IssuedVerifier_NoIssuerForArea_Fail()
     {
         var @event = FakeRegister.CreateProductionIssuedEvent(gridAreaOverride: "DK2");
         var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, _issuerKey);

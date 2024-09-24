@@ -41,23 +41,6 @@ public class ConsumptionAllocatedVerifierTests
     }
 
     [Fact]
-    public async Task Verifier_CertNotFound_Invalid()
-    {
-        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
-        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
-        var allocationId = prodCert.Allocated(consCert, prodParams, consParams);
-        _otherCertificate = prodCert;
-
-        var @event = FakeRegister.CreateAllocationEvent(allocationId, prodCert.Id, consCert.Id, prodParams, consParams);
-        var transaction = FakeRegister.SignTransaction(@event.ConsumptionCertificateId, @event, ownerKey);
-
-        var result = await _verifier.Verify(transaction, null, @event);
-
-        result.AssertInvalid("Certificate does not exist");
-    }
-
-    [Fact]
     public async Task Verifier_SliceNotFound_Invalid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();

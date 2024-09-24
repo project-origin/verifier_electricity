@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ProjectOrigin.ServiceCommon" Version="1.0.0-rc.6" />
+    <PackageReference Include="ProjectOrigin.ServiceCommon" Version="1.0.0-rc.9" />
     <PackageReference Include="ProjectOrigin.PedersenCommitment" Version="1.1.1" />
     <PackageReference Include="ProjectOrigin.HierarchicalDeterministicKeys" Version="1.0.0" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.65.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0" />
     <PackageReference Include="Serilog.Expressions" Version="5.0.0" />
@@ -24,10 +24,10 @@
       <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.0/src/Protos/verifier.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/registry.proto" Link="Protos\registry.proto" GrpcServices="Client" Access="Public">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.0/src/Protos/registry.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.1/src/Protos/registry.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/common.proto" Link="Protos\common.proto" GrpcServices="None">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.0/src/Protos/common.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.1/src/Protos/common.proto</SourceUrl>
     </Protobuf>
   </ItemGroup>
 

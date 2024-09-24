@@ -3,25 +3,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: verifier-{{ $.Release.Name }}-deployment
+  name: {{ $.Release.Name }}-deployment
   labels:
-    app: verifier-{{ required "Release name must be set" $.Release.Name }}
+    app: {{ required "Release name must be set" $.Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: verifier-{{ $.Release.Name }}
+      app: {{ $.Release.Name }}
   template:
     metadata:
       labels:
-        app: verifier-{{ $.Release.Name }}
+        app: {{ $.Release.Name }}
     spec:
       automountServiceAccountToken: false
       securityContext:
         runAsUser: 1654
         runAsNonRoot: true
       containers:
-        - name: verifier-{{ $.Release.Name }}
+        - name: {{ $.Release.Name }}
           image: {{ include "common.image" (dict "root" $ "image" $.Values.image) }}
           args:
             - "--serve"

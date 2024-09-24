@@ -102,6 +102,12 @@ internal static class FakeRegister
         certificate.Apply(@event);
     }
 
+    internal static void Withdrawn(this GranularCertificate certificate)
+    {
+        var @event = new V1.WithdrawnEvent();
+        certificate.Apply(@event);
+    }
+
     internal static V1.Commitment InvalidCommitment(uint quantity = 150, string label = "hello")
     {
         var privateCommitment = new SecretCommitmentInfo(quantity);
@@ -249,7 +255,16 @@ internal static class FakeRegister
         };
     }
 
-    private static Common.V1.FederatedStreamId CreateFederatedId() => new Common.V1.FederatedStreamId
+    internal static V1.UnclaimedEvent CreateUnclaimedEvent(Guid allocationId)
+    {
+        return new V1.UnclaimedEvent()
+        {
+            AllocationId = allocationId.ToProto(),
+        };
+    }
+
+
+    internal static Common.V1.FederatedStreamId CreateFederatedId(string? registry = Registry) => new Common.V1.FederatedStreamId
     {
         Registry = Registry,
         StreamId = new Common.V1.Uuid

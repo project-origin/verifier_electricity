@@ -19,7 +19,7 @@ public class ProductionSlicedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_TransferCertificate_Valid()
+    public async Task SlicedEventVerifier_TransferCertificate_Valid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -33,7 +33,7 @@ public class ProductionSlicedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_NoCertificate_Invalid()
+    public async Task SlicedEventVerifier_NoCertificate_Invalid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -47,7 +47,7 @@ public class ProductionSlicedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_FakeSlice_SliceNotFound()
+    public async Task SlicedEventVerifier_FakeSlice_SliceNotFound()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -63,7 +63,7 @@ public class ProductionSlicedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_WrongKey_InvalidSignature()
+    public async Task SlicedEventVerifier_WrongKey_InvalidSignature()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var otherKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -79,7 +79,7 @@ public class ProductionSlicedVerifierTests
 
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_InvalidSlicePublicKey_InvalidFormat()
+    public async Task SlicedEventVerifier_InvalidSlicePublicKey_InvalidFormat()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -98,7 +98,7 @@ public class ProductionSlicedVerifierTests
     }
 
     [Fact]
-    public async Task ProductionSlicedEventVerifier_InvalidSumProof_Invalid()
+    public async Task SlicedEventVerifier_InvalidSumProof_Invalid()
     {
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -111,5 +111,24 @@ public class ProductionSlicedVerifierTests
         var result = await _verifier.Verify(transaction, cert, @event);
 
         result.AssertInvalid("Invalid sum proof");
+    }
+
+
+    [Fact]
+    public async Task SlicedEventVerifier_CertificateWithdrawn_Invalid()
+    {
+        // Arrange
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+
+        var @event = FakeRegister.CreateSliceEvent(cert.Id, sourceParams, 150, ownerKey.PublicKey);
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        // Act
+        cert.Withdrawn();
+        var result = await _verifier.Verify(transaction, cert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate is withdrawn");
     }
 }

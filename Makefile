@@ -46,8 +46,8 @@ format:
 	dotnet format
 
 ## Run all tests
-test: build
-	dotnet test --no-build
+test: restore
+	dotnet test --no-restore
 
 ## Tests run with the sonarcloud analyser
 sonarcloud-test:

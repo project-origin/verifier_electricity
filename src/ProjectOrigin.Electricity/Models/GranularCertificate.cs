@@ -11,7 +11,7 @@ public class GranularCertificate
     public V1.GranularCertificateType Type => _issued.Type;
     public V1.DateInterval Period => _issued.Period;
     public string GridArea => _issued.GridArea;
-
+    public bool IsCertificateWithdrawn { get; private set; } = false;
     private readonly V1.IssuedEvent _issued;
     private readonly Dictionary<ByteString, CertificateSlice> _availableSlices = new Dictionary<ByteString, CertificateSlice>();
     private readonly Dictionary<Common.V1.Uuid, AllocationSlice> _allocationSlices = new Dictionary<Common.V1.Uuid, AllocationSlice>();
@@ -56,10 +56,24 @@ public class GranularCertificate
         }
     }
 
+    public void Apply(V1.WithdrawnEvent e)
+    {
+        IsCertificateWithdrawn = true;
+    }
+
+    public void Apply(V1.UnclaimedEvent e)
+    {
+        var slice = GetClaim(e.AllocationId) ?? throw new KeyNotFoundException($"claim not found ”{e.AllocationId}” - Invalid state");
+        _claimedSlices.Remove(e.AllocationId);
+
+        AddAvailableSlice(slice.Commitment, slice.Owner);
+    }
+
     public CertificateSlice? GetCertificateSlice(ByteString id) => _availableSlices.GetValueOrDefault(id);
     public bool HasClaim(Common.V1.Uuid allocationId) => _claimedSlices.ContainsKey(allocationId);
     public bool HasAllocation(Common.V1.Uuid allocationId) => _allocationSlices.ContainsKey(allocationId);
     public AllocationSlice? GetAllocation(Common.V1.Uuid allocationId) => _allocationSlices.GetValueOrDefault(allocationId);
+    public AllocationSlice? GetClaim(Common.V1.Uuid allocationId) => _claimedSlices.GetValueOrDefault(allocationId);
 
     protected CertificateSlice TakeAvailableSlice(ByteString sliceHash)
     {

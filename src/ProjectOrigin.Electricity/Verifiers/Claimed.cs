@@ -22,6 +22,9 @@ public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
         if (certificate is null)
             return new VerificationResult.Invalid("Certificate does not exist");
 
+        if (certificate.IsCertificateWithdrawn)
+            return new VerificationResult.Invalid("Certificate is withdrawn");
+
         var slice = certificate.GetAllocation(payload.AllocationId);
         if (slice is null)
             return new VerificationResult.Invalid("Allocation does not exist");
@@ -36,6 +39,9 @@ public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
             if (otherCertificate is null)
                 return new VerificationResult.Invalid("ConsumptionCertificate does not exist");
 
+            if (otherCertificate.IsCertificateWithdrawn)
+                return new VerificationResult.Invalid("ConsumptionCertificate is withdrawn");
+
             if (otherCertificate.Type != V1.GranularCertificateType.Consumption)
                 return new VerificationResult.Invalid("ConsumptionCertificate is not a consumption certificate");
 
@@ -48,6 +54,9 @@ public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
             var otherCertificate = await _remoteModelLoader.GetModel<GranularCertificate>(slice.ProductionCertificateId);
             if (otherCertificate is null)
                 return new VerificationResult.Invalid("ProductionCertificate does not exist");
+
+            if (otherCertificate.IsCertificateWithdrawn)
+                return new VerificationResult.Invalid("ProductionCertificate is withdrawn");
 
             if (otherCertificate.Type != V1.GranularCertificateType.Production)
                 return new VerificationResult.Invalid("ProductionCertificate is not a production certificate");

@@ -17,46 +17,14 @@ public class ConsumptionCertificateApplyTests
 
     private Common.V1.FederatedStreamId CreateId()
     {
-        var registry = _fixture.Create<string>();
-        var streamId = Guid.NewGuid();
-
-        return new Common.V1.FederatedStreamId
-        {
-            Registry = registry,
-            StreamId = new Common.V1.Uuid
-            {
-                Value = streamId.ToString()
-            }
-        };
+        return FakeRegister.CreateFederatedId(_fixture.Create<string>());
     }
 
     private (GranularCertificate, SecretCommitmentInfo) Create()
     {
-        var area = _fixture.Create<string>();
-        var period = new V1.DateInterval
-        {
-            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
-            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
-        };
-        var gsrnHash = SHA256.HashData(BitConverter.GetBytes(new Fixture().Create<ulong>()));
-        var quantity = new SecretCommitmentInfo(_fixture.Create<uint>());
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var certId = CreateId();
-
-        var @event = new V1.IssuedEvent()
-        {
-            CertificateId = certId,
-            Type = V1.GranularCertificateType.Consumption,
-            Period = period,
-            GridArea = area,
-            AssetIdHash = ByteString.CopyFrom(gsrnHash),
-            QuantityCommitment = quantity.ToProtoCommitment(certId.StreamId.Value),
-            OwnerPublicKey = ownerKey.PublicKey.ToProto(),
-        };
-
-        var cert = new GranularCertificate(@event);
-
-        return (cert, quantity);
+        var area = _fixture.Create<string>();
+        return FakeRegister.ConsumptionIssued(ownerKey.PublicKey, _fixture.Create<uint>(), area);
     }
 
     [Fact]
@@ -101,41 +69,6 @@ public class ConsumptionCertificateApplyTests
         Assert.Equal(period.Start, cert.Period.Start);
         Assert.Equal(period.End, cert.Period.End);
         Assert.NotNull(cert.GetCertificateSlice(quantity.ToSliceId()));
-    }
-
-    [Fact]
-    public void ConsumptionCertificate_Apply_SliceEvent()
-    {
-        var allocationId = Guid.NewGuid().ToProto();
-        var (cert, slice0) = Create();
-
-        var @event = new V1.SlicedEvent()
-        {
-            CertificateId = cert.Id,
-            SourceSliceHash = slice0.ToSliceId(),
-        };
-
-        var slice1 = new SecretCommitmentInfo(_fixture.Create<uint>());
-        var owner1 = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        @event.NewSlices.Add(new V1.SlicedEvent.Types.Slice
-        {
-            Quantity = slice1.ToProtoCommitment(cert.Id.StreamId.Value),
-            NewOwner = owner1.PublicKey.ToProto()
-        });
-
-        var slice2 = new SecretCommitmentInfo(_fixture.Create<uint>());
-        var owner2 = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        @event.NewSlices.Add(new V1.SlicedEvent.Types.Slice
-        {
-            Quantity = slice2.ToProtoCommitment(cert.Id.StreamId.Value),
-            NewOwner = owner2.PublicKey.ToProto()
-        });
-
-        cert.Apply(@event);
-
-        Assert.Null(cert.GetCertificateSlice(slice0.ToSliceId()));
-        Assert.NotNull(cert.GetCertificateSlice(slice1.ToSliceId()));
-        Assert.NotNull(cert.GetCertificateSlice(slice2.ToSliceId()));
     }
 
     [Fact]
