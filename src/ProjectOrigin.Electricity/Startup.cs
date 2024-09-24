@@ -41,14 +41,15 @@ public class Startup
         services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
         services.AddTransient<IModelHydrater, ElectricityModelHydrater>();
         services.AddTransient<IGridAreaIssuerService, GridAreaIssuerOptionsService>();
-        services.AddSingleton(new JsonSerializerOptions()
-        {
-            Converters = { new JsonPublicKeyConverter() }
-        });
 
         services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
         services.AddHttpClient();
         services.ConfigureUriOptionsLoader<NetworkOptions>("network", x => x.WithTypeConverter(new YamlPublicKeyConverter()));
+
+        services.AddSingleton(new JsonSerializerOptions()
+        {
+            Converters = { new JsonPublicKeyConverter() }
+        });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

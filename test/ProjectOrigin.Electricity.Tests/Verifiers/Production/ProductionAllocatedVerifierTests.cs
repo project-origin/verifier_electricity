@@ -7,8 +7,10 @@ using ProjectOrigin.Electricity.Models;
 using ProjectOrigin.Electricity.Interfaces;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
+using MsOptions = Microsoft.Extensions.Options.Options;
 using Xunit;
 using Google.Protobuf.WellKnownTypes;
+using ProjectOrigin.Electricity.Options;
 
 namespace ProjectOrigin.Electricity.Tests;
 
@@ -22,8 +24,7 @@ public class ProductionAllocatedVerifierTests
         var modelLoaderMock = new Mock<IRemoteModelLoader>();
         modelLoaderMock.Setup(obj => obj.GetModel<GranularCertificate>(It.IsAny<Common.V1.FederatedStreamId>()))
             .Returns(() => Task.FromResult(_otherCertificate));
-
-        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object);
+        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object, MsOptions.Create(new NetworkOptions { }));
     }
 
     [Fact]

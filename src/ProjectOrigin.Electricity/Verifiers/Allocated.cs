@@ -5,16 +5,22 @@ using System.Threading.Tasks;
 using ProjectOrigin.Electricity.Models;
 using System;
 using ProjectOrigin.Electricity.Interfaces;
+using Microsoft.Extensions.Options;
+using ProjectOrigin.Electricity.Options;
+using System.Linq;
+using Google.Protobuf;
 
 namespace ProjectOrigin.Electricity.Verifiers;
 
 public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
 {
     private readonly IRemoteModelLoader _remoteModelLoader;
+    private readonly IOptions<NetworkOptions> _options;
 
-    public AllocatedEventVerifier(IRemoteModelLoader remoteModelLoader)
+    public AllocatedEventVerifier(IRemoteModelLoader remoteModelLoader, IOptions<NetworkOptions> options)
     {
         _remoteModelLoader = remoteModelLoader;
+        _options = options;
     }
 
     public async Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.AllocatedEvent payload)
@@ -29,7 +35,6 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
 
         if (certificate.Type == V1.GranularCertificateType.Production)
         {
-
             var productionSlice = certificate.GetCertificateSlice(payload.ProductionSourceSliceHash);
             if (productionSlice is null)
                 return new VerificationResult.Invalid("Production slice does not exist");
@@ -60,10 +65,26 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
         }
         else if (certificate.Type == V1.GranularCertificateType.Consumption)
         {
-
             var consumptionSlice = certificate.GetCertificateSlice(payload.ConsumptionSourceSliceHash);
             if (consumptionSlice is null)
                 return new VerificationResult.Invalid("Consumption slice does not exist");
+
+            AreaInfo areaInfo;
+            if (!_options.Value.Areas.TryGetValue(certificate.GridArea, out areaInfo!)
+                || areaInfo is null)
+                return new VerificationResult.Invalid("Area does not exist");
+
+            if (areaInfo.Chronicler is not null)
+            {
+                var claimIntent = new Chronicler.V1.ClaimIntent
+                {
+                    CertificateId = certificate.Id,
+                    Commitment = consumptionSlice.Commitment.ToByteString(),
+                };
+
+                if (!areaInfo.Chronicler.SignerKeys.Any(x => x.PublicKey.Verify(claimIntent.ToByteArray(), payload.ConsumptionSourceSliceHash.Span)))
+                    return new VerificationResult.Invalid("Not signed by Chronicler");
+            }
 
             if (!transaction.IsSignatureValid(consumptionSlice.Owner))
                 return new VerificationResult.Invalid($"Invalid signature for slice");

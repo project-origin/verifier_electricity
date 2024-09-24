@@ -29,6 +29,9 @@
     <Protobuf Include="../../protos/common.proto" Link="Protos\common.proto" GrpcServices="None">
       <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v1.3.1/src/Protos/common.proto</SourceUrl>
     </Protobuf>
+    <Protobuf Include="../../protos/chronicler.proto" Link="Protos\chronicler.proto" GrpcServices="None">
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/chronicler/v1.0.0-rc.1/src/Protos/chronicler.proto</SourceUrl>
+    </Protobuf>
   </ItemGroup>
 
 </Project>
