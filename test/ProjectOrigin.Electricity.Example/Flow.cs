@@ -13,7 +13,7 @@ using RegistryV1 = ProjectOrigin.Registry.V1;
 
 namespace ProjectOrigin.Electricity.Example;
 
-public class WithoutWalletFlow
+public class Flow
 {
     public required string Area { get; init; }
     public required string IssuerKey { get; init; }
