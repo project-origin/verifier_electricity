@@ -33,8 +33,7 @@ public class YamlPublicKeyConverter : IYamlTypeConverter
 
     public void WriteYaml(IEmitter emitter, object? value, Type type, ObjectSerializer serializer)
     {
-        if (value is IPublicKey publicKey
-            && publicKey is not null)
+        if (value is IPublicKey publicKey)
         {
             var text = publicKey.ExportPkixText();
             var bytes = Encoding.UTF8.GetBytes(text);

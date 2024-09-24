@@ -26,16 +26,8 @@ public class JsonPublicKeyConverter : JsonConverter<IPublicKey>
 
     public override void Write(Utf8JsonWriter writer, IPublicKey value, JsonSerializerOptions options)
     {
-        if (value is IPublicKey publicKey
-             && publicKey is not null)
-        {
-            var text = publicKey.ExportPkixText();
-            var bytes = Encoding.UTF8.GetBytes(text);
-            writer.WriteBase64StringValue(bytes);
-        }
-        else
-        {
-            writer.WriteBase64StringValue([]);
-        }
+        var text = value.ExportPkixText();
+        var bytes = Encoding.UTF8.GetBytes(text);
+        writer.WriteBase64StringValue(bytes);
     }
 }

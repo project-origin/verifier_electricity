@@ -3,7 +3,7 @@ using ProjectOrigin.Electricity.Example;
 
 if (args.Length < 6)
 {
-    Console.Error.WriteLine("Insufficient arguments");
+    await Console.Error.WriteLineAsync("Insufficient arguments");
     return 1;
 }
 
