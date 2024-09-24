@@ -6,6 +6,8 @@ using ProjectOrigin.Electricity.Exceptions;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 
+namespace ProjectOrigin.Electricity.Converters;
+
 public class JsonPublicKeyConverter : JsonConverter<IPublicKey>
 {
     public override IPublicKey? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

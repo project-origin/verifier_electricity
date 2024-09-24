@@ -7,13 +7,13 @@ using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
-namespace ProjectOrigin.Electricity.Options;
+namespace ProjectOrigin.Electricity.Converters;
 
 public class YamlPublicKeyConverter : IYamlTypeConverter
 {
     public bool Accepts(Type type)
     {
-        return type == typeof(IPublicKey);
+        return type == typeof(IPublicKey) || type.IsAssignableTo(typeof(IPublicKey));
     }
 
     public object? ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)

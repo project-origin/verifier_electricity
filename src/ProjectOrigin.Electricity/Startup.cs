@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ProjectOrigin.Electricity.Converters;
 using ProjectOrigin.Electricity.Interfaces;
 using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.Electricity.Services;
