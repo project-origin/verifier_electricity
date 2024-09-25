@@ -1,9 +1,11 @@
 using System.Reflection;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ProjectOrigin.Electricity.Converters;
 using ProjectOrigin.Electricity.Interfaces;
 using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.Electricity.Services;
@@ -43,7 +45,12 @@ public class Startup
 
         services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
         services.AddHttpClient();
-        services.ConfigureUriOptionsLoader<NetworkOptions>("network");
+        services.ConfigureUriOptionsLoader<NetworkOptions>("network", x => x.WithTypeConverter(new YamlPublicKeyConverter()));
+
+        services.AddSingleton(new JsonSerializerOptions()
+        {
+            Converters = { new JsonPublicKeyConverter() }
+        });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

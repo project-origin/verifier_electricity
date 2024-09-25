@@ -13,7 +13,7 @@ using RegistryV1 = ProjectOrigin.Registry.V1;
 
 namespace ProjectOrigin.Electricity.Example;
 
-public class WithoutWalletFlow
+public class Flow
 {
     public required string Area { get; init; }
     public required string IssuerKey { get; init; }
@@ -30,7 +30,7 @@ public class WithoutWalletFlow
         // Decode text key from base64 string
         var keyText = Encoding.UTF8.GetString(Convert.FromBase64String(IssuerKey));
 
-        // Import the key for the issuing body of the area;
+        // Import the key for the issuing body of the area
         var issuerKey = Algorithms.Ed25519.ImportPrivateKeyText(keyText);
 
         // Create channel and client

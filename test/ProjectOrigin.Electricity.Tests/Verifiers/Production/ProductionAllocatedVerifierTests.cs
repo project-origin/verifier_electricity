@@ -7,28 +7,55 @@ using ProjectOrigin.Electricity.Models;
 using ProjectOrigin.Electricity.Interfaces;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
+using MsOptions = Microsoft.Extensions.Options;
 using Xunit;
 using Google.Protobuf.WellKnownTypes;
+using ProjectOrigin.Electricity.Options;
+using Google.Protobuf;
+using System.Collections.Generic;
+using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 
 namespace ProjectOrigin.Electricity.Tests;
 
 public class ProductionAllocatedVerifierTests
 {
-    private AllocatedEventVerifier _verifier;
+    private readonly IPrivateKey _issuerKey;
+    private readonly MsOptions.IOptions<NetworkOptions> _defaultOptions;
+    private readonly Mock<IRemoteModelLoader> _modelLoaderMock;
     private GranularCertificate? _otherCertificate;
 
     public ProductionAllocatedVerifierTests()
     {
-        var modelLoaderMock = new Mock<IRemoteModelLoader>();
-        modelLoaderMock.Setup(obj => obj.GetModel<GranularCertificate>(It.IsAny<Common.V1.FederatedStreamId>()))
+        _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+        _modelLoaderMock = new Mock<IRemoteModelLoader>();
+        _modelLoaderMock.Setup(obj => obj.GetModel<GranularCertificate>(It.IsAny<Common.V1.FederatedStreamId>()))
             .Returns(() => Task.FromResult(_otherCertificate));
 
-        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object);
+        _defaultOptions = MsOptions.Options.Create(new NetworkOptions
+        {
+            Areas = new Dictionary<string, AreaInfo>
+            {
+                {
+                    "DK1", new AreaInfo
+                    {
+                        IssuerKeys = new List<KeyInfo>
+                        {
+                            new KeyInfo
+                            {
+                                PublicKey = _issuerKey.PublicKey
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     [Fact]
     public async Task Verifier_AllocateCertificate_Valid()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: consCert.Period.Clone());
@@ -37,7 +64,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertValid();
     }
@@ -46,6 +73,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_InvalidProductionSlice_SliceNotFound()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -54,14 +83,16 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, consParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
-        result.AssertInvalid("Production slice does not exist");
+        result.AssertInvalid("Certificate slice does not exist");
     }
 
     [Fact]
     public async Task Verifier_WrongKey_InvalidSignature()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var otherKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -71,7 +102,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, otherKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Invalid signature for slice");
     }
@@ -79,6 +110,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_ConsCertNotFould()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -87,7 +120,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("ConsumptionCertificate does not exist");
     }
@@ -95,6 +128,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingStart()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -112,7 +147,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertValid();
     }
@@ -120,6 +155,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingEnd()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -137,7 +174,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertValid();
     }
@@ -145,6 +182,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_ValidPeriod_EnclosingWithin()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -162,7 +201,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertValid();
     }
@@ -170,6 +209,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_InvalidPeriod_DifferentPeriods()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -188,7 +229,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Periods are not overlapping");
     }
@@ -196,6 +237,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_InvalidPeriod_Before()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -214,7 +257,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Periods are not overlapping");
     }
@@ -222,6 +265,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_InvalidPeriod_After()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
 
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
@@ -240,7 +285,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Periods are not overlapping");
     }
@@ -248,15 +293,17 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocateCertificate_AllowCrossArea()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, area: "DK1");
-        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, area: "DK2");
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, area: "DK2");
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, area: "DK1");
         _otherCertificate = consCert;
 
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertValid();
     }
@@ -264,6 +311,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_WrongConsumptionSlice_SliceNotFound()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -272,7 +321,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, prodParams);
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Consumption slice does not exist");
     }
@@ -280,6 +329,8 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_RandomProofData_InvalidEqualityProof()
     {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -288,7 +339,7 @@ public class ProductionAllocatedVerifierTests
         var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams, overwrideEqualityProof: new Fixture().CreateMany<byte>(64).ToArray());
         var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
 
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Invalid Equality proof");
     }
@@ -296,7 +347,9 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocationCerticate_InvalidCertificateIsWithdrawnInvalidEqualityProof()
     {
+
         // Arrange
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
         var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
@@ -306,9 +359,119 @@ public class ProductionAllocatedVerifierTests
 
         // Act
         prodCert.Withdrawn();
-        var result = await _verifier.Verify(transaction, prodCert, @event);
+        var result = await verifier.Verify(transaction, prodCert, @event);
 
         // Assert
         result.AssertInvalid("Certificate is withdrawn");
+    }
+
+
+    [Fact]
+    public async Task Verifier_Chronicler_Enabled_InvalidSignature()
+    {
+        // Arrange
+        var chroniclerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, MsOptions.Options.Create(new NetworkOptions
+        {
+            Areas = new Dictionary<string, AreaInfo>
+            {
+                {
+                    "DK1", new AreaInfo
+                    {
+                        Chronicler = new ChroniclerInfo
+                        {
+                            Url = "http://chronicler",
+                            SignerKeys = new List<KeyInfo>
+                            {
+                                new KeyInfo
+                                {
+                                    PublicKey = chroniclerKey.PublicKey
+                                }
+                            }
+                        },
+                        IssuerKeys = new List<KeyInfo>
+                        {
+                            new KeyInfo
+                            {
+                                PublicKey = _issuerKey.PublicKey
+                            }
+                        }
+                    }
+                }
+            }
+        }));
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        // Act
+        var result = await verifier.Verify(transaction, consCert, @event);
+
+        // Assert
+        result.AssertInvalid("Not signed by Chronicler");
+    }
+
+    [Fact]
+    public async Task Verifier_Chronicler_Enable_ValidSignature()
+    {
+        // Arrange
+        var chroniclerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, MsOptions.Options.Create(new NetworkOptions
+        {
+            Areas = new Dictionary<string, AreaInfo>
+            {
+                {
+                    "DK1", new AreaInfo
+                    {
+                        Chronicler = new ChroniclerInfo
+                        {
+                            Url = "http://chronicler",
+                            SignerKeys = new List<KeyInfo>
+                            {
+                                new KeyInfo
+                                {
+                                    PublicKey = chroniclerKey.PublicKey
+                                }
+                            }
+                        },
+                        IssuerKeys = new List<KeyInfo>
+                        {
+                            new KeyInfo
+                            {
+                                PublicKey = _issuerKey.PublicKey
+                            }
+                        }
+                    }
+                }
+            }
+        }));
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+        _otherCertificate = consCert;
+
+        var claimIntent = new Chronicler.V1.ClaimIntent
+        {
+            CertificateId = prodCert.Id,
+            Commitment = ByteString.CopyFrom(prodParams.Commitment.C),
+        };
+        var signature = chroniclerKey.Sign(claimIntent.ToByteArray()).ToArray();
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams, chroniclerSignature: signature);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        // Act
+        var result = await verifier.Verify(transaction, prodCert, @event);
+
+        // Assert
+        result.AssertValid();
     }
 }

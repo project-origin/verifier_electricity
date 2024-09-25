@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using Microsoft.Extensions.Options;
 using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
@@ -20,7 +18,7 @@ public class NetworkOptionsFake : IOptions<NetworkOptions>
                 {gridArea, new AreaInfo(){
                     IssuerKeys = new List<KeyInfo>(){
                         new KeyInfo(){
-                            PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))
+                            PublicKey = issuerKey.PublicKey
                         }
                     }
                 }}

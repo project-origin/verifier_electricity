@@ -2,8 +2,10 @@
 using System.Threading.Tasks;
 using Moq;
 using ProjectOrigin.Electricity.Interfaces;
+using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
+using MsOptions = Microsoft.Extensions.Options.Options;
 using Xunit;
 
 namespace ProjectOrigin.Electricity.Tests;
@@ -16,7 +18,7 @@ public class AllocatedVerifierTests
     {
         var modelLoaderMock = new Mock<IRemoteModelLoader>();
 
-        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object);
+        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object, MsOptions.Create(new NetworkOptions { }));
     }
 
     [Fact]
