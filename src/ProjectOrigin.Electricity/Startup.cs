@@ -35,6 +35,8 @@ public class Startup
         services.AddTransient<IEventVerifier<V1.ClaimedEvent>, ClaimedEventVerifier>();
         services.AddTransient<IEventVerifier<V1.SlicedEvent>, SlicedEventVerifier>();
         services.AddTransient<IEventVerifier<V1.TransferredEvent>, TransferredEventVerifier>();
+        services.AddTransient<IEventVerifier<V1.UnclaimedEvent>, UnclaimedEventVerifier>();
+        services.AddTransient<IEventVerifier<V1.WithdrawnEvent>, WithdrawEventVerifier>();
 
         services.AddTransient<IVerifierDispatcher, VerifierDispatcher>();
         services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
