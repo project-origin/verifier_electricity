@@ -4,6 +4,8 @@ using AutoFixture;
 using Microsoft.Extensions.Options;
 using System;
 using System.Text;
+using ProjectOrigin.Electricity.Interfaces;
+using ProjectOrigin.Electricity.V1;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.TestCommon.Fixtures;
 using ProjectOrigin.TestCommon;
@@ -135,6 +137,34 @@ public class MisconfigurationTest
 
         var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
         Assert.Equal("Invalid URL address specified for registry ”MyRegistry”", ex.Message);
+    }
+
+    [Fact]
+    public void DependencyInjection_Services_ThatVerifiersAreAdded()
+    {
+        ConfigureValidNetwork();
+
+        _serviceFixture.GetRequiredService<IEventVerifier<IssuedEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<AllocatedEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<ClaimedEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<SlicedEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<TransferredEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<WithdrawnEvent>>();
+        _serviceFixture.GetRequiredService<IEventVerifier<UnclaimedEvent>>();
+    }
+
+    private void ConfigureValidNetwork()
+    {
+        var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+        ConfigureNetwork($"""
+                          registries:
+                            MyRegistry:
+                              url: http://localhost:5000
+                          areas:
+                            {Area}:
+                              issuerKeys:
+                                - publicKey: {Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))}
+                          """);
     }
 
     private void ConfigureNetwork(string yamlConfig, string extension = ".yaml")
