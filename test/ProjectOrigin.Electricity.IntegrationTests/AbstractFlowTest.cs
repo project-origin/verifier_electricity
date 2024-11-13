@@ -1,16 +1,13 @@
 using Xunit;
 using System.Threading.Tasks;
 using System;
-using ProjectOrigin.PedersenCommitment;
 using ProjectOrigin.HierarchicalDeterministicKeys;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 using Grpc.Net.Client;
 using FluentAssertions;
 using Google.Protobuf;
-using System.Security.Cryptography;
 using ProjectOrigin.Verifier.V1;
 using System.Collections.Generic;
-using Google.Protobuf.WellKnownTypes;
 using ProjectOrigin.Electricity.V1;
 using ProjectOrigin.Common.V1;
 
@@ -79,31 +76,7 @@ public abstract class AbstractFlowTest
     protected static V1.IssuedEvent CreateIssuedEvent()
     {
         var owner = Algorithms.Secp256k1.GenerateNewPrivateKey();
-
-        var commitmentInfo = new SecretCommitmentInfo(250);
-        var certId = Guid.NewGuid().ToString();
-
-        return new V1.IssuedEvent
-        {
-            CertificateId = CreateId(certId),
-            Type = GranularCertificateType.Consumption,
-            Period = new V1.DateInterval
-            {
-                Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2023, 1, 1, 12, 0, 0, 0, TimeSpan.Zero)),
-                End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2023, 1, 1, 13, 0, 0, 0, TimeSpan.Zero))
-            },
-            GridArea = Area,
-            AssetIdHash = ByteString.Empty,
-            QuantityCommitment = new Electricity.V1.Commitment
-            {
-                Content = ByteString.CopyFrom(commitmentInfo.Commitment.C),
-                RangeProof = ByteString.CopyFrom(commitmentInfo.CreateRangeProof(certId))
-            },
-            OwnerPublicKey = new Electricity.V1.PublicKey
-            {
-                Content = ByteString.CopyFrom(owner.PublicKey.Export())
-            }
-        };
+        return Some.IssuedEvent(owner.PublicKey, Registry, Area);
     }
 
     protected static FederatedStreamId CreateId(string certId)
@@ -143,21 +116,6 @@ public abstract class AbstractFlowTest
 
     protected static Registry.V1.Transaction SignEvent(Common.V1.FederatedStreamId streamId, IMessage @event, IPrivateKey signerKey)
     {
-        var header = new Registry.V1.TransactionHeader()
-        {
-            FederatedStreamId = streamId,
-            PayloadType = @event.Descriptor.FullName,
-            PayloadSha512 = ByteString.CopyFrom(SHA512.HashData(@event.ToByteArray())),
-            Nonce = Guid.NewGuid().ToString(),
-        };
-
-        var transaction = new Registry.V1.Transaction()
-        {
-            Header = header,
-            HeaderSignature = ByteString.CopyFrom(signerKey.Sign(header.ToByteArray())),
-            Payload = @event.ToByteString()
-        };
-
-        return transaction;
+        return Some.Transaction(streamId, @event, signerKey);
     }
 }
