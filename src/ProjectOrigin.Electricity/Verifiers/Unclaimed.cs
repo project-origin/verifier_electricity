@@ -30,7 +30,9 @@ public class UnclaimedEventVerifier : IEventVerifier<V1.UnclaimedEvent>
         if (!transaction.IsSignatureValid(claim.Owner))
             return new VerificationResult.Invalid($"Invalid signature for claim");
 
-        var oppostiteCertificateId = claim.ProductionCertificateId == certificate.Id ? claim.ConsumptionCertificateId : claim.ProductionCertificateId;
+        var oppostiteCertificateId = claim.ProductionCertificateId.Equals(certificate.Id)
+            ? claim.ConsumptionCertificateId
+            : claim.ProductionCertificateId;
 
         var oppositeCertificate = await _remoteModelLoader.GetModel<GranularCertificate>(oppostiteCertificateId);
 
