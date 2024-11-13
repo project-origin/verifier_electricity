@@ -11,10 +11,12 @@ namespace ProjectOrigin.Electricity.Verifiers;
 public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
 {
     private readonly IRemoteModelLoader _remoteModelLoader;
+    private readonly IExpiryChecker _expiryChecker;
 
-    public ClaimedEventVerifier(IRemoteModelLoader remoteModelLoader)
+    public ClaimedEventVerifier(IRemoteModelLoader remoteModelLoader, IExpiryChecker expiryChecker)
     {
         _remoteModelLoader = remoteModelLoader;
+        _expiryChecker = expiryChecker;
     }
 
     public async Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, ClaimedEvent payload)
@@ -24,6 +26,9 @@ public class ClaimedEventVerifier : IEventVerifier<V1.ClaimedEvent>
 
         if (certificate.IsCertificateWithdrawn)
             return new VerificationResult.Invalid("Certificate is withdrawn");
+
+        if (_expiryChecker.IsExpired(certificate))
+            return new VerificationResult.Invalid("Certificate has expired");
 
         var slice = certificate.GetAllocation(payload.AllocationId);
         if (slice is null)

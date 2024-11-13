@@ -36,7 +36,7 @@ public class UnclaimedVerifierTests
         _modelLoaderMock.Setup(x => x.GetModel<GranularCertificate>(_oppositeCertificate.Id)).ReturnsAsync(_oppositeCertificate);
         _modelLoaderMock.Setup(x => x.GetModel<GranularCertificate>(_certificate.Id)).ReturnsAsync(_certificate);
 
-        _verifier = new UnclaimedEventVerifier(_modelLoaderMock.Object);
+        _verifier = new UnclaimedEventVerifier(_modelLoaderMock.Object, new ExpiryCheckerFake());
     }
 
     [Fact]
@@ -178,5 +178,21 @@ public class UnclaimedVerifierTests
 
         // Assert
         result.AssertValid();
+    }
+
+    [Fact]
+    public async Task UnclaimedVerifier_CertificateHasExpired_InvalidBecauseOfExpiredCertificate()
+    {
+        // Arrange
+        _verifier = new UnclaimedEventVerifier(_modelLoaderMock.Object, new ExpiryCheckerFake(true));
+        (_certificate, _commitment) = FakeRegister.ProductionIssued(_ownerKey.PublicKey, 250);
+        var @event = FakeRegister.CreateUnclaimedEvent(_allocationId);
+        var transaction = FakeRegister.SignTransaction(_certificate.Id, @event, _ownerKey);
+
+        // Act
+        var result = await _verifier.Verify(transaction, _certificate, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate has expired");
     }
 }

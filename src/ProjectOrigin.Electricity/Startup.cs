@@ -44,6 +44,7 @@ public class Startup
         services.AddTransient<IRemoteModelLoader, GrpcRemoteModelLoader>();
         services.AddTransient<IModelHydrater, ElectricityModelHydrater>();
         services.AddTransient<IGridAreaIssuerService, GridAreaIssuerOptionsService>();
+        services.AddTransient<IExpiryChecker, ExpiryChecker>();
 
         services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
         services.AddHttpClient();

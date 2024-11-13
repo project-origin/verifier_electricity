@@ -8,10 +8,12 @@ namespace ProjectOrigin.Electricity.Verifiers;
 public class UnclaimedEventVerifier : IEventVerifier<V1.UnclaimedEvent>
 {
     private readonly IRemoteModelLoader _remoteModelLoader;
+    private readonly IExpiryChecker _expiryChecker;
 
-    public UnclaimedEventVerifier(IRemoteModelLoader remoteModelLoader)
+    public UnclaimedEventVerifier(IRemoteModelLoader remoteModelLoader, IExpiryChecker expiryChecker)
     {
         _remoteModelLoader = remoteModelLoader;
+        _expiryChecker = expiryChecker;
     }
 
     public async Task<VerificationResult> Verify(Registry.V1.Transaction transaction, GranularCertificate? certificate, V1.UnclaimedEvent payload)
@@ -21,6 +23,9 @@ public class UnclaimedEventVerifier : IEventVerifier<V1.UnclaimedEvent>
 
         if (certificate.IsCertificateWithdrawn)
             return new VerificationResult.Invalid("Certificate is withdrawn");
+
+        if (_expiryChecker.IsExpired(certificate))
+            return new VerificationResult.Invalid("Certificate has expired");
 
         var claim = certificate.GetClaim(payload.AllocationId);
 

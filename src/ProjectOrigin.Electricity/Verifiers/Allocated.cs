@@ -16,11 +16,13 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
 {
     private readonly IRemoteModelLoader _remoteModelLoader;
     private readonly IOptions<NetworkOptions> _options;
+    private readonly IExpiryChecker _expiryChecker;
 
-    public AllocatedEventVerifier(IRemoteModelLoader remoteModelLoader, IOptions<NetworkOptions> options)
+    public AllocatedEventVerifier(IRemoteModelLoader remoteModelLoader, IOptions<NetworkOptions> options, IExpiryChecker expiryChecker)
     {
         _remoteModelLoader = remoteModelLoader;
         _options = options;
+        _expiryChecker = expiryChecker;
     }
 
     public async Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.AllocatedEvent payload)
@@ -30,6 +32,9 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
 
         if (certificate.IsCertificateWithdrawn)
             return new VerificationResult.Invalid("Certificate is withdrawn");
+
+        if (_expiryChecker.IsExpired(certificate))
+            return new VerificationResult.Invalid("Certificate has expired");
 
         switch (certificate.Type)
         {

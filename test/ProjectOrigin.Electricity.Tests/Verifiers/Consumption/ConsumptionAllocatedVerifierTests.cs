@@ -20,6 +20,7 @@ public class ConsumptionAllocatedVerifierTests
     private readonly MsOptions.IOptions<NetworkOptions> _defaultOptions;
     private GranularCertificate? _otherCertificate;
     private Mock<IRemoteModelLoader> _modelLoaderMock;
+    private IExpiryChecker _expiryChecker;
 
     public ConsumptionAllocatedVerifierTests()
     {
@@ -46,12 +47,13 @@ public class ConsumptionAllocatedVerifierTests
                 }
             }
         });
+        _expiryChecker = new ExpiryCheckerFake();
     }
 
     [Fact]
     public async Task Verifier_AllocateCertificate_Valid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -70,7 +72,7 @@ public class ConsumptionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_CertNotFound_Invalid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -89,7 +91,7 @@ public class ConsumptionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_SliceNotFound_Invalid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -108,7 +110,7 @@ public class ConsumptionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_InvalidSignatureForSlice_Invalid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var otherKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
@@ -128,7 +130,7 @@ public class ConsumptionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_ProductionNotFound_Invalid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -147,7 +149,7 @@ public class ConsumptionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_ProdNotAllocated_Invalid()
     {
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions);
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -167,8 +169,7 @@ public class ConsumptionAllocatedVerifierTests
     {
         // Arrange
         var chroniclerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
-
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, MsOptions.Options.Create(new NetworkOptions
+        var networkOptions = MsOptions.Options.Create(new NetworkOptions
         {
             Areas = new Dictionary<string, AreaInfo>
             {
@@ -196,7 +197,9 @@ public class ConsumptionAllocatedVerifierTests
                     }
                 }
             }
-        }));
+        });
+
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, networkOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
@@ -219,8 +222,7 @@ public class ConsumptionAllocatedVerifierTests
     {
         // Arrange
         var chroniclerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
-
-        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, MsOptions.Options.Create(new NetworkOptions
+        var networkOptions = MsOptions.Options.Create(new NetworkOptions
         {
             Areas = new Dictionary<string, AreaInfo>
             {
@@ -248,7 +250,9 @@ public class ConsumptionAllocatedVerifierTests
                     }
                 }
             }
-        }));
+        });
+
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, networkOptions, _expiryChecker);
 
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
         var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);

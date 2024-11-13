@@ -8,6 +8,7 @@ public record NetworkOptions
 {
     public IDictionary<string, RegistryInfo> Registries { get; init; } = new Dictionary<string, RegistryInfo>();
     public IDictionary<string, AreaInfo> Areas { get; init; } = new Dictionary<string, AreaInfo>();
+    public int? DaysBeforeCertificatesExpire {get; init;}
 }
 
 public record RegistryInfo

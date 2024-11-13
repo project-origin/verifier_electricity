@@ -20,7 +20,7 @@ public class ProductionClaimedVerifierTests
         modelLoaderMock.Setup(obj => obj.GetModel<GranularCertificate>(It.IsAny<Common.V1.FederatedStreamId>()))
             .Returns(() => Task.FromResult(_otherCertificate));
 
-        _verifier = new ClaimedEventVerifier(modelLoaderMock.Object);
+        _verifier = new ClaimedEventVerifier(modelLoaderMock.Object, new ExpiryCheckerFake());
     }
 
     [Fact]

@@ -2,10 +2,8 @@
 using System.Threading.Tasks;
 using Moq;
 using ProjectOrigin.Electricity.Interfaces;
-using ProjectOrigin.Electricity.Options;
 using ProjectOrigin.Electricity.Verifiers;
 using ProjectOrigin.HierarchicalDeterministicKeys;
-using MsOptions = Microsoft.Extensions.Options.Options;
 using Xunit;
 
 namespace ProjectOrigin.Electricity.Tests;
@@ -17,8 +15,8 @@ public class AllocatedVerifierTests
     public AllocatedVerifierTests()
     {
         var modelLoaderMock = new Mock<IRemoteModelLoader>();
-
-        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object, MsOptions.Create(new NetworkOptions { }));
+        var networkOptions = new NetworkOptionsFake();
+        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object, networkOptions, new ExpiryCheckerFake());
     }
 
     [Fact]
@@ -55,6 +53,28 @@ public class AllocatedVerifierTests
 
         // Assert
         result.AssertInvalid("Certificate is withdrawn");
+    }
+
+    [Fact]
+    public async Task Verifier_CertificateExpired_Invalid()
+    {
+        // Arrange
+        var modelLoaderMock = new Mock<IRemoteModelLoader>();
+        _verifier = new AllocatedEventVerifier(modelLoaderMock.Object, new NetworkOptionsFake(), new ExpiryCheckerFake(true));
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+        var allocationId = prodCert.Allocated(consCert, prodParams, consParams);
+
+        var @event = FakeRegister.CreateAllocationEvent(allocationId, prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ConsumptionCertificateId, @event, ownerKey);
+
+        // Act
+        var result = await _verifier.Verify(transaction, consCert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate has expired");
     }
 
 }
