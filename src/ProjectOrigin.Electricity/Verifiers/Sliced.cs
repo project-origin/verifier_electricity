@@ -16,7 +16,7 @@ public class SlicedEventVerifier : IEventVerifier<V1.SlicedEvent>
     {
         _expiryChecker = expiryChecker;
     }
-    
+
     public Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.SlicedEvent payload)
     {
         if (certificate is null)

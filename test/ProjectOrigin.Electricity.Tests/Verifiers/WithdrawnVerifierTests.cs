@@ -23,7 +23,7 @@ public class WithdrawnVerifierTests
         var optionsFake = new NetworkOptionsFake(IssuerArea, _issuerKey);
         _issuerService = new GridAreaIssuerOptionsService(optionsFake);
 
-        _verifier = new WithdrawEventVerifier(_issuerService, new ExpiryCheckerFake());
+        _verifier = new WithdrawEventVerifier(_issuerService);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class WithdrawnVerifierTests
         // Create verifier with no network options
         var optionsEmpty = Microsoft.Extensions.Options.Options.Create(new NetworkOptions());
         var issuerService = new GridAreaIssuerOptionsService(optionsEmpty);
-        var verifier = new WithdrawEventVerifier(issuerService, new ExpiryCheckerFake());
+        var verifier = new WithdrawEventVerifier(issuerService);
 
         // Act
         var result = await verifier.Verify(transaction, cert, @event);
@@ -116,23 +116,5 @@ public class WithdrawnVerifierTests
 
         // Assert
         result.AssertInvalid($"Invalid issuer signature for GridArea ”{cert.GridArea}”");
-    }
-
-    [Fact]
-    public async Task WithdrawnEventVerifier_CertificateExpired_Invalid()
-    {
-        // Arrange
-        _verifier = new WithdrawEventVerifier(_issuerService, new ExpiryCheckerFake(true));
-        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
-        var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
-
-        var @event = new WithdrawnEvent();
-        var transaction = FakeRegister.SignTransaction(cert.Id, @event, _issuerKey);
-
-        // Act
-        var result = await _verifier.Verify(transaction, cert, @event);
-
-        // Assert
-        result.AssertInvalid("Certificate has expired");
     }
 }

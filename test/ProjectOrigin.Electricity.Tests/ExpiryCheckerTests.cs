@@ -95,13 +95,13 @@ public class ExpiryCheckerTests()
         expectedIsExpired.Should().Be(isExpired);
     }
 
-    private ExpiryChecker CreateExpiryChecker(int? daysToExpiry)
+    private static ExpiryChecker CreateExpiryChecker(int? daysToExpiry)
     {
         var networkOptions = new NetworkOptionsFake("Narnia", Algorithms.Ed25519.GenerateNewPrivateKey(), daysToExpiry);
         return new ExpiryChecker(networkOptions);
     }
 
-    private GranularCertificate CreateCertificate(DateTimeOffset periodEnd)
+    private static GranularCertificate CreateCertificate(DateTimeOffset periodEnd)
     {
         var dateInterval = new DateInterval()
         {

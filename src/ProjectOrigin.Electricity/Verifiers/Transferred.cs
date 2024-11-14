@@ -14,7 +14,7 @@ public class TransferredEventVerifier : IEventVerifier<V1.TransferredEvent>
     {
         _expiryChecker = expiryChecker;
     }
-    
+
     public Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.TransferredEvent payload)
     {
         if (certificate is null)
