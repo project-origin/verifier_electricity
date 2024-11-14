@@ -11,6 +11,7 @@ namespace ProjectOrigin.Electricity.Tests;
 
 public class WithdrawnVerifierTests
 {
+    private GridAreaIssuerOptionsService _issuerService;
     private WithdrawEventVerifier _verifier;
     private IPrivateKey _issuerKey;
     const string IssuerArea = "DK1";
@@ -20,9 +21,9 @@ public class WithdrawnVerifierTests
         _issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
         var optionsFake = new NetworkOptionsFake(IssuerArea, _issuerKey);
-        var issuerService = new GridAreaIssuerOptionsService(optionsFake);
+        _issuerService = new GridAreaIssuerOptionsService(optionsFake);
 
-        _verifier = new WithdrawEventVerifier(issuerService);
+        _verifier = new WithdrawEventVerifier(_issuerService);
     }
 
     [Fact]

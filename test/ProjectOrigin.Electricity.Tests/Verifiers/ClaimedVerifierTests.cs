@@ -15,8 +15,7 @@ public class ClaimedVerifierTests
     public ClaimedVerifierTests()
     {
         var modelLoaderMock = new Mock<IRemoteModelLoader>();
-
-        _verifier = new ClaimedEventVerifier(modelLoaderMock.Object);
+        _verifier = new ClaimedEventVerifier(modelLoaderMock.Object, new ExpiryCheckerFake());
     }
 
     [Fact]
@@ -55,5 +54,26 @@ public class ClaimedVerifierTests
         var result = await _verifier.Verify(transaction, prodCert, @event);
 
         result.AssertInvalid("Certificate is withdrawn");
+    }
+
+    [Fact]
+    public async Task ClaimedVerifier_CertificateExpired_Invalid()
+    {
+        // Arrange
+        var modelLoaderMock = new Mock<IRemoteModelLoader>();
+        _verifier = new ClaimedEventVerifier(modelLoaderMock.Object, new ExpiryCheckerFake(true));
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250);
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+        var allocationId = prodCert.Allocated(consCert, prodParams, consParams);
+
+        var @event = FakeRegister.CreateClaimedEvent(allocationId, prodCert.Id);
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        // Act
+        var result = await _verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertInvalid("Certificate has expired");
     }
 }

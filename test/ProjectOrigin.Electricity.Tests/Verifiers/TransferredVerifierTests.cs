@@ -13,7 +13,7 @@ public class TransferredVerifierTests
 
     public TransferredVerifierTests()
     {
-        _verifier = new TransferredEventVerifier();
+        _verifier = new TransferredEventVerifier(new ExpiryCheckerFake());
     }
 
     [Fact]
@@ -114,6 +114,25 @@ public class TransferredVerifierTests
 
         // Assert
         result.AssertInvalid("Certificate is withdrawn");
+    }
+
+    [Fact]
+    public async Task TransferredVerifierTests_CertificateExpired_Invalid()
+    {
+        // Arrange
+        _verifier = new TransferredEventVerifier(new ExpiryCheckerFake(true));
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var newOwnerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+
+        var @event = FakeRegister.CreateTransferEvent(cert, sourceParams, newOwnerKey.PublicKey.ToProto());
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        // Act
+        var result = await _verifier.Verify(transaction, cert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate has expired");
     }
 
 }

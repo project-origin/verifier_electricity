@@ -8,6 +8,13 @@ namespace ProjectOrigin.Electricity.Verifiers;
 
 public class TransferredEventVerifier : IEventVerifier<V1.TransferredEvent>
 {
+    private readonly IExpiryChecker _expiryChecker;
+
+    public TransferredEventVerifier(IExpiryChecker expiryChecker)
+    {
+        _expiryChecker = expiryChecker;
+    }
+
     public Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.TransferredEvent payload)
     {
         if (certificate is null)
@@ -15,6 +22,9 @@ public class TransferredEventVerifier : IEventVerifier<V1.TransferredEvent>
 
         if (certificate.IsCertificateWithdrawn)
             return new VerificationResult.Invalid("Certificate is withdrawn");
+
+        if (_expiryChecker.IsExpired(certificate))
+            return new VerificationResult.Invalid("Certificate has expired");
 
         var certificateSlice = certificate.GetCertificateSlice(payload.SourceSliceHash);
         if (certificateSlice is null)

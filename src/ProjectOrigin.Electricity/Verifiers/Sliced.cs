@@ -10,6 +10,13 @@ namespace ProjectOrigin.Electricity.Verifiers;
 
 public class SlicedEventVerifier : IEventVerifier<V1.SlicedEvent>
 {
+    private readonly IExpiryChecker _expiryChecker;
+
+    public SlicedEventVerifier(IExpiryChecker expiryChecker)
+    {
+        _expiryChecker = expiryChecker;
+    }
+
     public Task<VerificationResult> Verify(Transaction transaction, GranularCertificate? certificate, V1.SlicedEvent payload)
     {
         if (certificate is null)
@@ -17,6 +24,9 @@ public class SlicedEventVerifier : IEventVerifier<V1.SlicedEvent>
 
         if (certificate.IsCertificateWithdrawn)
             return new VerificationResult.Invalid("Certificate is withdrawn");
+
+        if (_expiryChecker.IsExpired(certificate))
+            return new VerificationResult.Invalid("Certificate has expired");
 
         var certificateSlice = certificate.GetCertificateSlice(payload.SourceSliceHash);
         if (certificateSlice is null)

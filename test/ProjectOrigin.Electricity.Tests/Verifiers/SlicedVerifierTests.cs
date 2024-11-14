@@ -15,7 +15,7 @@ public class ProductionSlicedVerifierTests
 
     public ProductionSlicedVerifierTests()
     {
-        _verifier = new SlicedEventVerifier();
+        _verifier = new SlicedEventVerifier(new ExpiryCheckerFake());
     }
 
     [Fact]
@@ -130,5 +130,23 @@ public class ProductionSlicedVerifierTests
 
         // Assert
         result.AssertInvalid("Certificate is withdrawn");
+    }
+
+    [Fact]
+    public async Task SlicedEventVerifier_CertificateExpired_Invalid()
+    {
+        // Arrange
+        _verifier = new SlicedEventVerifier(new ExpiryCheckerFake(true));
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (cert, sourceParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250);
+
+        var @event = FakeRegister.CreateSliceEvent(cert.Id, sourceParams, 150, ownerKey.PublicKey);
+        var transaction = FakeRegister.SignTransaction(@event.CertificateId, @event, ownerKey);
+
+        // Act
+        var result = await _verifier.Verify(transaction, cert, @event);
+
+        // Assert
+        result.AssertInvalid("Certificate has expired");
     }
 }
