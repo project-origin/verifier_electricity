@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.29.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.67.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.68.1" />
     <Protobuf Include="..\..\protos\verifier.proto" GrpcServices="Client" />
   </ItemGroup>
 
