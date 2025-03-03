@@ -1,6 +1,6 @@
 ARG PROJECT=ProjectOrigin.Electricity
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0.200 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0.102 AS build
 ARG PROJECT
 
 WORKDIR /builddir
@@ -14,7 +14,7 @@ RUN dotnet build ./src/${PROJECT} -c Release --no-restore -p:CustomAssemblyName=
 RUN dotnet publish ./src/${PROJECT} -c Release --no-build -p:CustomAssemblyName=App -o /app/publish
 
 # ------- production image -------
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.2-noble AS production
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.1-noble-chiseled AS production
 
 WORKDIR /app
 COPY --from=build /app/publish .
