@@ -19,7 +19,6 @@
     <PackageReference Include="Google.Protobuf" Version="3.30.0" />
     <PackageReference Include="Grpc.Tools" Version="2.70.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.67.0" />
-    <PackageReference Include="ProjectOrigin.ServiceCommon" Version="2.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.0" />
     <Protobuf Include="..\..\protos\common.proto" GrpcServices="None" />
     <Protobuf Include="..\..\protos\electricity.proto" GrpcServices="None" />
