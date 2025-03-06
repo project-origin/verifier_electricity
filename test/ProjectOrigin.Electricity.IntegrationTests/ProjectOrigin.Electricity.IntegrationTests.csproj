@@ -8,7 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Moq" Version="4.20.71" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="AutoFixture" Version="4.18.1" />
 
@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProjectOrigin.Electricity\ProjectOrigin.Electricity.csproj" />
-    <PackageReference Include="ProjectOrigin.TestCommon" Version="2.0.0" />
+    <PackageReference Include="ProjectOrigin.TestCommon" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

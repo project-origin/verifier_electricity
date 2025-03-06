@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Moq" Version="4.20.71" />
     <PackageReference Include="AutoFixture" Version="4.18.1" />
 
     <!-- Accepts any 7.1.0 or above version, but not 8.0.0 and higher. -->
