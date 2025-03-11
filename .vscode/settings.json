@@ -4,5 +4,6 @@
     "coverage-gutters.coverageFileNames": [
         "coverage.cobertura.xml"
     ],
-    "dotnet.defaultSolution": "src/Electricity.sln"
+    "dotnet.defaultSolution": "src/Electricity.sln",
+    "makefile.configureOnOpen": false
 }
