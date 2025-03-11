@@ -40,12 +40,15 @@ public class RegistryFixture : IAsyncLifetime
 
     public string ConfigFile { get; init; }
     public string RegistryName { get; } = "TestRegistry";
-    public string RegistryUrl => $"http://{registryContainer.Hostname}:{registryContainer.GetMappedPublicPort(GrpcPort)}";
-    protected string RegistryContainerUrl => $"http://{registryContainer.IpAddress}:{GrpcPort}";
-    public GrpcChannel RegistryChannel => GrpcChannel.ForAddress(RegistryContainerUrl);
+    public GrpcChannel RegistryChannel =>
+        GrpcChannel.ForAddress($"http://localhost:{registryContainer.GetMappedPublicPort(5000)}");
+
 
     public RegistryFixture()
     {
+        // Dotnet disallows HTTP/2 plaintext, unless we force it to
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
         Network = new NetworkBuilder().WithName(Guid.NewGuid().ToString()).Build();
         rabbitMqImage = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(CommonDirectoryPath.GetProjectDirectory(), string.Empty)
@@ -141,11 +144,17 @@ public class RegistryFixture : IAsyncLifetime
     {
         await rabbitMqImage.CreateAsync();
         await Network.CreateAsync();
+        await _verifierImage.CreateAsync();
+
+        // Start RabbitMQ and Postgres
         await rabbitMqContainer.StartWithLoggingAsync();
         await registryPostgresContainer.StartWithLoggingAsync();
-        await registryContainer.StartWithLoggingAsync();
-        await _verifierImage.CreateAsync();
+
+        // Start Verifier container first
         await verifierContainer.StartWithLoggingAsync();
+
+        // Now start Registry
+        await registryContainer.StartWithLoggingAsync();
     }
 
     public virtual async Task DisposeAsync()

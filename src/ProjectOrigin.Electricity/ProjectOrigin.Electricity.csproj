@@ -21,13 +21,13 @@
   <ItemGroup>
     <Protobuf Include="..\..\protos\electricity.proto" GrpcServices="None" />
     <Protobuf Include="../../protos/verifier.proto" Link="Protos\verifier.proto" GrpcServices="Server" Access="Internal">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v2.0.0/protos/verifier.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v3.0.0/protos/verifier.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/registry.proto" Link="Protos\registry.proto" GrpcServices="Client" Access="Public">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v2.1.0/protos/registry.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v3.0.0/protos/registry.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/common.proto" Link="Protos\common.proto" GrpcServices="None">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v2.1.0/protos/common.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v3.0.0/protos/common.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/chronicler.proto" Link="Protos\chronicler.proto" GrpcServices="None">
       <SourceUrl>https://raw.githubusercontent.com/project-origin/chronicler/v1.0.0-rc.1/src/Protos/chronicler.proto</SourceUrl>
