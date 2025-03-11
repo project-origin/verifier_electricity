@@ -98,9 +98,9 @@ public class RegistryFixture : IAsyncLifetime
         var solutionDirectory = CommonDirectoryPath.GetSolutionDirectory().DirectoryPath;
 
         // Testcontainers doesn't support some functionality in Dockerfiles
-        _modifiedDockerfile = new ModifiedDockerfile(Path.Combine(solutionDirectory, "Electricity.Dockerfile"), content => content
-            .Replace(" --platform=$BUILDPLATFORM", "") // not supported by Testcontainers
-            .Replace("-jammy-chiseled-extra", "")); // not supported by Testcontainers because of user permissions
+        _modifiedDockerfile = new ModifiedDockerfile(Path.Combine(solutionDirectory, "Electricity.Dockerfile"),
+            content => content
+                .Replace(" --platform=$BUILDPLATFORM", "")); // not supported by Testcontainers
 
         _verifierImage = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(solutionDirectory)
