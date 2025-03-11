@@ -21,7 +21,7 @@
   <ItemGroup>
     <Protobuf Include="..\..\protos\electricity.proto" GrpcServices="None" />
     <Protobuf Include="../../protos/verifier.proto" Link="Protos\verifier.proto" GrpcServices="Server" Access="Internal">
-      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v2.0.0/protos/verifier.proto</SourceUrl>
+      <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v3.0.0/protos/verifier.proto</SourceUrl>
     </Protobuf>
     <Protobuf Include="../../protos/registry.proto" Link="Protos\registry.proto" GrpcServices="Client" Access="Public">
       <SourceUrl>https://raw.githubusercontent.com/project-origin/registry/v3.0.0/protos/registry.proto</SourceUrl>
