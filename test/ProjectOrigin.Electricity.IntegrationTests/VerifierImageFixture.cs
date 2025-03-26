@@ -7,7 +7,7 @@ using Xunit;
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
 [CollectionDefinition("VerifierImageCollection")]
-public class AssemblyCollection : ICollectionFixture<VerifierImageFixture>
+public class VerifierImageCollection : ICollectionFixture<VerifierImageFixture>
 {
     // This class is just a marker to associate the fixture with the collection, to only create the image once
 }
