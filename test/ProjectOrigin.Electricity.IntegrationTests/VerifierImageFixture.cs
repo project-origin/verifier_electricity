@@ -1,4 +1,3 @@
-
 using System.IO;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
@@ -7,12 +6,18 @@ using Xunit;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
+[CollectionDefinition("VerifierImageCollection")]
+public class AssemblyCollection : ICollectionFixture<VerifierImageFixture>
+{
+    // This class is just a marker to associate the fixture with the collection, to only create the image once
+}
+
 public class VerifierImageFixture : IAsyncLifetime
 {
     private readonly ModifiedDockerfile _modifiedDockerfile;
     private readonly IFutureDockerImage _verifierImage;
 
-    public IFutureDockerImage VerifierImage => _verifierImage;
+    public IFutureDockerImage Image => _verifierImage;
 
     public VerifierImageFixture()
     {

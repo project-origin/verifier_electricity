@@ -12,7 +12,8 @@ using Docker.DotNet;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
-public class ContainerTest : AbstractFlowTest, IClassFixture<VerifierImageFixture>, IAsyncLifetime
+[Collection("VerifierImageCollection")]
+public class ContainerTest : AbstractFlowTest, IAsyncLifetime
 {
     private const string DockerfilePath = "Electricity.Dockerfile";
     private const int GrpcPort = 5000;
@@ -35,7 +36,7 @@ public class ContainerTest : AbstractFlowTest, IClassFixture<VerifierImageFixtur
         """, ".yaml");
 
         _container = new ContainerBuilder()
-                .WithImage(verifierImageFixture.VerifierImage)
+                .WithImage(verifierImageFixture.Image)
                 .WithPortBinding(GrpcPort, true)
                 .WithResourceMapping(configFile, $"/app/tmp/")
                 .WithEnvironment("Network__ConfigurationUri", $"file:///app/tmp/{Path.GetFileName(configFile)}")
