@@ -26,8 +26,10 @@ public class MisconfigurationTest
         _serviceFixture = new TestServerFixture<Startup>();
     }
 
-    [Fact]
-    public void ValidYaml()
+    [Theory]
+    [InlineData("Disabled")]
+    [InlineData("Enclosing")]
+    public void ValidYaml(string timeConstraint)
     {
         var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
@@ -39,6 +41,7 @@ public class MisconfigurationTest
           {Area}:
             issuerKeys:
               - publicKey: {Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))}
+        timeConstraint: {timeConstraint}
         """);
 
         var channel = _serviceFixture.Channel;
@@ -46,8 +49,10 @@ public class MisconfigurationTest
         Assert.NotNull(channel);
     }
 
-    [Fact]
-    public void ValidJson()
+    [Theory]
+    [InlineData("Disabled")]
+    [InlineData("Enclosing")]
+    public void ValidJson(string timeConstraint)
     {
         var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
 
@@ -66,15 +71,15 @@ public class MisconfigurationTest
                         }}
                     ]
                 }}
-            }}
-        }}", Area, Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))), ".json");
+            }},
+            ""TimeConstraint"": ""{2}""
+
+        }}", Area, Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText())), timeConstraint), ".json");
 
         var channel = _serviceFixture.Channel;
 
         Assert.NotNull(channel);
     }
-
-
 
     [Fact]
     public void OptionsValidationException_IfInvalidKeyFormat()
@@ -138,6 +143,27 @@ public class MisconfigurationTest
         var ex = Assert.Throws<OptionsValidationException>(() => { var channel = _serviceFixture.Channel; });
         Assert.Equal("Invalid URL address specified for registry ”MyRegistry”", ex.Message);
     }
+
+    [Fact]
+    public void OptionsValidationException_InvalidTimeConstraint()
+    {
+        var issuerKey = Algorithms.Ed25519.GenerateNewPrivateKey();
+
+        ConfigureNetwork($"""
+        registries:
+          MyRegistry:
+            url: https://example.com
+        areas:
+          {Area}:
+            issuerKeys:
+              - publicKey: {Convert.ToBase64String(Encoding.UTF8.GetBytes(issuerKey.PublicKey.ExportPkixText()))}
+        timeConstraint: Invalid
+        """);
+
+        var ex = Assert.Throws<YamlException>(() => { var channel = _serviceFixture.Channel; });
+        Assert.Equal("Requested value 'Invalid' was not found.", ex.InnerException?.Message);
+    }
+
 
     [Fact]
     public void DependencyInjection_Services_ThatVerifiersAreAdded()

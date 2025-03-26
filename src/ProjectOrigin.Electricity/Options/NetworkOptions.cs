@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System.Text.Json.Serialization;
 using ProjectOrigin.HierarchicalDeterministicKeys.Interfaces;
 
 namespace ProjectOrigin.Electricity.Options;
@@ -9,6 +9,14 @@ public record NetworkOptions
     public IDictionary<string, RegistryInfo> Registries { get; init; } = new Dictionary<string, RegistryInfo>();
     public IDictionary<string, AreaInfo> Areas { get; init; } = new Dictionary<string, AreaInfo>();
     public int? DaysBeforeCertificatesExpire { get; init; }
+    public TimeConstraint TimeConstraint { get; init; } = TimeConstraint.Enclosing;
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum TimeConstraint
+{
+    Enclosing,
+    Disabled,
 }
 
 public record RegistryInfo

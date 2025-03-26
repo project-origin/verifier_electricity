@@ -60,8 +60,9 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
         if (otherCertificate.Type != V1.GranularCertificateType.Consumption)
             return new VerificationResult.Invalid("ConsumptionCertificate is not a consumption certificate");
 
-        if (!otherCertificate.Period.IsEnclosingOrEnclosed(certificate.Period))
-            return new VerificationResult.Invalid("Periods are not overlapping");
+        var verificationResult = VerifyTimeConstraint(certificate, otherCertificate);
+        if (verificationResult is VerificationResult.Invalid)
+            return verificationResult;
 
         var otherSlice = otherCertificate.GetCertificateSlice(payload.ConsumptionSourceSliceHash);
         if (otherSlice is null)
@@ -75,6 +76,24 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
             return new VerificationResult.Invalid("Invalid Equality proof");
 
         return new VerificationResult.Valid();
+    }
+
+    private VerificationResult VerifyTimeConstraint(GranularCertificate certificate, GranularCertificate otherCertificate)
+    {
+        switch (_options.Value.TimeConstraint)
+        {
+            case TimeConstraint.Enclosing:
+                if (!otherCertificate.Period.IsEnclosingOrEnclosed(certificate.Period))
+                    return new VerificationResult.Invalid("Periods are not overlapping");
+                return new VerificationResult.Valid();
+
+            case TimeConstraint.Disabled:
+                return new VerificationResult.Valid();
+
+            default:
+                throw new NotImplementedException($"TimeConstraint ”{_options.Value.TimeConstraint}” is not implemented");
+        }
+
     }
 
     private async Task<VerificationResult> VerifyConsumption(Transaction transaction, GranularCertificate certificate, V1.AllocatedEvent payload)
