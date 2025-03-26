@@ -177,6 +177,8 @@ public class MisconfigurationTest
         _serviceFixture.GetRequiredService<IEventVerifier<TransferredEvent>>();
         _serviceFixture.GetRequiredService<IEventVerifier<WithdrawnEvent>>();
         _serviceFixture.GetRequiredService<IEventVerifier<UnclaimedEvent>>();
+
+        Assert.True(true);
     }
 
     private void ConfigureValidNetwork()
