@@ -7,37 +7,23 @@ using System.Text;
 using Grpc.Net.Client;
 using ProjectOrigin.TestCommon;
 using System.IO;
-using DotNet.Testcontainers.Images;
 using Xunit.Abstractions;
 using Docker.DotNet;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
+[Collection("VerifierImageCollection")]
 public class ContainerTest : AbstractFlowTest, IAsyncLifetime
 {
     private const string DockerfilePath = "Electricity.Dockerfile";
     private const int GrpcPort = 5000;
 
     private readonly ITestOutputHelper _outputHelper;
-    private readonly IFutureDockerImage _image;
     private readonly IContainer _container;
-    private readonly ModifiedDockerfile _modifiedDockerfile;
 
-    public ContainerTest(ITestOutputHelper outputHelper)
+    public ContainerTest(ITestOutputHelper outputHelper, VerifierImageFixture verifierImageFixture)
     {
         _outputHelper = outputHelper;
-        var solutionDirectory = CommonDirectoryPath.GetSolutionDirectory().DirectoryPath;
-
-        // Testcontainers doesn't support some functionality in Dockerfiles
-        _modifiedDockerfile = new ModifiedDockerfile(Path.Combine(solutionDirectory, DockerfilePath), content => content
-            .Replace(" --platform=$BUILDPLATFORM", "") // not supported by Testcontainers
-            .Replace("-jammy-chiseled-extra", "")); // not supported by Testcontainers because of user permissions
-
-        _image = new ImageFromDockerfileBuilder()
-            .WithDockerfileDirectory(solutionDirectory)
-            .WithDockerfile(_modifiedDockerfile.FileName)
-            .WithLogger(new CustomActionLogger("ImageBuilder", outputHelper.WriteLine))
-            .Build();
 
         var configFile = TempFile.WriteAllText($"""
         registries:
@@ -50,7 +36,7 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
         """, ".yaml");
 
         _container = new ContainerBuilder()
-                .WithImage(_image)
+                .WithImage(verifierImageFixture.Image)
                 .WithPortBinding(GrpcPort, true)
                 .WithResourceMapping(configFile, $"/app/tmp/")
                 .WithEnvironment("Network__ConfigurationUri", $"file:///app/tmp/{Path.GetFileName(configFile)}")
@@ -67,7 +53,6 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
     {
         try
         {
-            await _image.CreateAsync();
             await _container.StartAsync();
         }
         catch (DockerApiException)
@@ -81,7 +66,6 @@ public class ContainerTest : AbstractFlowTest, IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        _modifiedDockerfile.Dispose();
         await _container.StopAsync();
     }
 

@@ -28,23 +28,19 @@ public class RegistryFixture : IAsyncLifetime
 
     private readonly IContainer registryContainer;
     private readonly IContainer verifierContainer;
-    private readonly Testcontainers.RabbitMq.RabbitMqContainer rabbitMqContainer;
+    private readonly RabbitMqContainer rabbitMqContainer;
     private readonly PostgreSqlContainer registryPostgresContainer;
     protected readonly INetwork Network;
     private readonly IFutureDockerImage rabbitMqImage;
     public IPrivateKey Dk1IssuerKey { get; init; }
     public IPrivateKey Dk2IssuerKey { get; init; }
 
-    private ModifiedDockerfile _modifiedDockerfile;
-    private IFutureDockerImage _verifierImage;
-
     public string ConfigFile { get; init; }
     public string RegistryName { get; } = "TestRegistry";
     public GrpcChannel RegistryChannel =>
         GrpcChannel.ForAddress($"http://localhost:{registryContainer.GetMappedPublicPort(5000)}");
 
-
-    public RegistryFixture()
+    public RegistryFixture(VerifierImageFixture verifierImageFixture)
     {
         // Dotnet disallows HTTP/2 plaintext, unless we force it to
         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -100,17 +96,6 @@ public class RegistryFixture : IAsyncLifetime
 
         var solutionDirectory = CommonDirectoryPath.GetSolutionDirectory().DirectoryPath;
 
-        // Testcontainers doesn't support some functionality in Dockerfiles
-        _modifiedDockerfile = new ModifiedDockerfile(Path.Combine(solutionDirectory, "Electricity.Dockerfile"), content => content
-            .Replace(" --platform=$BUILDPLATFORM", "") // not supported by Testcontainers
-            .Replace("-jammy-chiseled-extra", "")); // not supported by Testcontainers because of user permissions
-
-        _verifierImage = new ImageFromDockerfileBuilder()
-            .WithDockerfileDirectory(solutionDirectory)
-            .WithDockerfile(_modifiedDockerfile.FileName)
-            .Build();
-
-
         ConfigFile = Path.GetTempFileName() + ".yaml";
         File.WriteAllText(ConfigFile, $"""
         registries:
@@ -126,7 +111,7 @@ public class RegistryFixture : IAsyncLifetime
         """);
 
         verifierContainer = new ContainerBuilder()
-                .WithImage(_verifierImage)
+                .WithImage(verifierImageFixture.Image)
                 .WithNetwork(Network)
                 .WithNetworkAliases(VerifierAlias)
                 .WithPortBinding(GrpcPort, true)
@@ -144,7 +129,6 @@ public class RegistryFixture : IAsyncLifetime
     {
         await rabbitMqImage.CreateAsync();
         await Network.CreateAsync();
-        await _verifierImage.CreateAsync();
 
         // Start RabbitMQ and Postgres
         await rabbitMqContainer.StartWithLoggingAsync();
@@ -163,7 +147,6 @@ public class RegistryFixture : IAsyncLifetime
         await registryPostgresContainer.StopAsync();
         await rabbitMqContainer.StopAsync();
         await verifierContainer.StopAsync();
-        _modifiedDockerfile.Dispose();
         await Network.DisposeAsync();
     }
 }

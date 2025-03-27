@@ -48,7 +48,8 @@ public class ProductionAllocatedVerifierTests
                         }
                     }
                 }
-            }
+            },
+            TimeConstraint = TimeConstraint.Enclosing
         });
         _expiryChecker = new ExpiryCheckerFake();
     }
@@ -237,6 +238,40 @@ public class ProductionAllocatedVerifierTests
     }
 
     [Fact]
+    public async Task Verifier_AllocateCertificate_DifferentPeriods_ValidWhenDisabled()
+    {
+        var configuredNetworkOptions = MsOptions.Options.Create(new NetworkOptions
+        {
+            Areas = _defaultOptions.Value.Areas,
+            TimeConstraint = TimeConstraint.Disabled
+        });
+
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, configuredNetworkOptions, _expiryChecker);
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 12, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero))
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: new V1.DateInterval()
+        {
+            Start = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 13, 0, 0, TimeSpan.Zero)),
+            End = Timestamp.FromDateTimeOffset(new DateTimeOffset(2022, 09, 25, 14, 0, 0, TimeSpan.Zero))
+        });
+
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertValid();
+    }
+
+    [Fact]
     public async Task Verifier_AllocateCertificate_InvalidPeriod_Before()
     {
         var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
@@ -349,7 +384,6 @@ public class ProductionAllocatedVerifierTests
     [Fact]
     public async Task Verifier_AllocationCerticate_InvalidCertificateIsWithdrawnInvalidEqualityProof()
     {
-
         // Arrange
         var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
         var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();

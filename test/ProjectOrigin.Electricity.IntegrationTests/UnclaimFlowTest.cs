@@ -12,6 +12,7 @@ using static ProjectOrigin.Registry.V1.RegistryService;
 
 namespace ProjectOrigin.Electricity.IntegrationTests;
 
+[Collection("VerifierImageCollection")]
 public class UnclaimFlowTest : IClassFixture<RegistryFixture>
 {
     private readonly RegistryServiceClient _registryClient;
@@ -19,7 +20,7 @@ public class UnclaimFlowTest : IClassFixture<RegistryFixture>
     private readonly IPrivateKey _issuerPrivateKeyDk1;
     private readonly IHDPrivateKey _ownerPrivateKey;
 
-    public UnclaimFlowTest(RegistryFixture registryFixture)
+    public UnclaimFlowTest(RegistryFixture registryFixture, VerifierImageFixture verifierImageFixture)
     {
         _registryClient = new RegistryServiceClient(registryFixture.RegistryChannel);
         _registryName = registryFixture.RegistryName;
