@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using AutoFixture;
 using Google.Protobuf;
@@ -42,7 +44,7 @@ internal static class FakeRegister
     }
 
 
-    internal static (GranularCertificate certificate, SecretCommitmentInfo parameters) ConsumptionIssued(IPublicKey ownerKey, uint quantity, string area = "DK1", V1.DateInterval? periodOverride = null)
+    internal static (GranularCertificate certificate, SecretCommitmentInfo parameters) ConsumptionIssued(IPublicKey ownerKey, uint quantity, string area = "DK1", V1.DateInterval? periodOverride = null, IDictionary<string, string>? attributes = null)
     {
         var id = CreateFederatedId();
         var quantityCommitmentParameters = new SecretCommitmentInfo(quantity);
@@ -52,7 +54,9 @@ internal static class FakeRegister
                 quantityCommitmentParameters.ToProtoCommitment(id.StreamId.Value),
                 ownerKey.ToProto(),
                 area,
-                periodOverride);
+                periodOverride,
+                attributes?.Select(kv => new V1.Attribute { Key = kv.Key, Value = kv.Value }) ?? Enumerable.Empty<V1.Attribute>()
+                );
 
         var cert = new GranularCertificate(@event);
 
@@ -123,7 +127,8 @@ internal static class FakeRegister
         V1.Commitment? quantityCommitmentOverride = null,
         V1.PublicKey? ownerKeyOverride = null,
         string? gridAreaOverride = null,
-        V1.DateInterval? periodOverride = null
+        V1.DateInterval? periodOverride = null,
+        IEnumerable<V1.Attribute>? attributes = null
         )
     {
         var id = CreateFederatedId();
@@ -140,6 +145,7 @@ internal static class FakeRegister
             AssetIdHash = ByteString.CopyFrom(gsrnHash),
             QuantityCommitment = quantityCommitmentOverride ?? quantityCommmitment,
             OwnerPublicKey = owner,
+            Attributes = { attributes }
         };
     }
 
