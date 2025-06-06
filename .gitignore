@@ -1,4 +1,4 @@
-**/Dockerfile.tmp
+**/*.Dockerfile.tmp
 .debug/
 # ignore all sub charts
 charts/*/charts

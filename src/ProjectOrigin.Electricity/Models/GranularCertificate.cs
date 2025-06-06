@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using Google.Protobuf;
 
@@ -74,6 +75,11 @@ public class GranularCertificate
     public bool HasAllocation(Common.V1.Uuid allocationId) => _allocationSlices.ContainsKey(allocationId);
     public AllocationSlice? GetAllocation(Common.V1.Uuid allocationId) => _allocationSlices.GetValueOrDefault(allocationId);
     public AllocationSlice? GetClaim(Common.V1.Uuid allocationId) => _claimedSlices.GetValueOrDefault(allocationId);
+
+    public string? GetAttribute(string key)
+    {
+        return _issued.Attributes.SingleOrDefault(x => x.Key == key)?.Value;
+    }
 
     protected CertificateSlice TakeAvailableSlice(ByteString sliceHash)
     {

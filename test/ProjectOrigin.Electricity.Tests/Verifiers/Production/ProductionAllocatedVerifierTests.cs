@@ -72,6 +72,26 @@ public class ProductionAllocatedVerifierTests
         result.AssertValid();
     }
 
+    [Fact]
+    public async Task Verifier_AllocateCertificate_IsTrial_NotMatched()
+    {
+        var verifier = new AllocatedEventVerifier(_modelLoaderMock.Object, _defaultOptions, _expiryChecker);
+
+        var ownerKey = Algorithms.Secp256k1.GenerateNewPrivateKey();
+        var (consCert, consParams) = FakeRegister.ConsumptionIssued(ownerKey.PublicKey, 250, attributes: new Dictionary<string, string>{
+            { "IsTrial", "true" },
+        });
+        var (prodCert, prodParams) = FakeRegister.ProductionIssued(ownerKey.PublicKey, 250, periodOverride: consCert.Period.Clone());
+        _otherCertificate = consCert;
+
+        var @event = FakeRegister.CreateAllocationEvent(Guid.NewGuid(), prodCert.Id, consCert.Id, prodParams, consParams);
+        var transaction = FakeRegister.SignTransaction(@event.ProductionCertificateId, @event, ownerKey);
+
+        var result = await verifier.Verify(transaction, prodCert, @event);
+
+        result.AssertInvalid("Certificates are not of the same trial type");
+    }
+
 
     [Fact]
     public async Task Verifier_InvalidProductionSlice_SliceNotFound()
