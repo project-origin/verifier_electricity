@@ -78,7 +78,7 @@ public class GranularCertificate
 
     public string? GetAttribute(string key)
     {
-        return _issued.Attributes.SingleOrDefault(x => x.Key == key)?.Value;
+        return _issued.Attributes.SingleOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase))?.Value;
     }
 
     protected CertificateSlice TakeAvailableSlice(ByteString sliceHash)
