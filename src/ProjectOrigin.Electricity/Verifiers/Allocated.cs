@@ -61,7 +61,7 @@ public class AllocatedEventVerifier : IEventVerifier<V1.AllocatedEvent>
             return new VerificationResult.Invalid("ConsumptionCertificate is not a consumption certificate");
 
         if (!Rules.IsTrial.Match(certificate.GetAttribute("IsTrial"), otherCertificate.GetAttribute("IsTrial")))
-            return new VerificationResult.Invalid("Certificates are not of the same trial type");
+            return new VerificationResult.Invalid($"Certificate {certificate.Id.StreamId} and {otherCertificate.Id.StreamId} are not of the same trial type");
 
         var verificationResult = VerifyTimeConstraint(certificate, otherCertificate);
         if (verificationResult is VerificationResult.Invalid)
