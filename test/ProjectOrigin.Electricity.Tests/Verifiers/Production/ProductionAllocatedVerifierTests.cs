@@ -89,7 +89,7 @@ public class ProductionAllocatedVerifierTests
 
         var result = await verifier.Verify(transaction, prodCert, @event);
 
-        result.AssertInvalid("Certificates are not of the same trial type");
+        result.AssertInvalid($"Certificate {prodCert.Id.StreamId} and {consCert.Id.StreamId} are not of the same trial type");
     }
 
 
