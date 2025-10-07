@@ -10,6 +10,6 @@ on:
 
 jobs:
   analyse:
-    uses: project-origin/.github/.github/workflows/reusable-sonarcloud.yaml@9553a65a38376761e49042e5c28edeb40e5a2a62
+    uses: project-origin/.github/.github/workflows/reusable-sonarcloud.yaml@21afb08ba000fd93c4eb9e9109e6c7ed12716132
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
